@@ -61,6 +61,7 @@ El servidor compilado escucha en `127.0.0.1:4321` (configurable en `astro.config
 4. Revisa la tabla de resultados y pulsa **Descargar PDF**.
 5. En la tabla **1. Diskgroups ASM**, usa la columna **ACCION → 🔍 Ver discos** para consultar los discos de ese diskgroup. El resultado se añade como una sección nueva sin borrar las consultas maestras y también entra en el PDF.
 6. Cada sección de discos tiene un botón **✕** para cerrarla. Puedes tener varias abiertas a la vez; al cerrar una desaparece del DOM y de futuros PDF.
+7. En **2. Discos candidatos**, usa **ACCION → 📋 Copiar función** para copiar al portapapeles la función `Valido_disco()` y la invocación con el **PATH completo** de esa fila, por ejemplo `Valido_disco /dev/oracleasm/DISCO_1`.
 
 ## Discos del diskgroup
 
@@ -82,6 +83,16 @@ ORDER BY name;
 - Si pulsas de nuevo **Ver discos** en el mismo diskgroup, se refresca su tarjeta; no se crea un duplicado.
 - Cerrar una tarjeta solo la quita de la página: el job en servidor continúa, pero su resultado se ignora.
 - Las tablas no muestran badges de estado (`OK`/`WARN`/`ERROR`). El indicador superior de ejecución se conserva.
+
+## Copiar función para discos candidatos
+
+En la tabla **2. Discos candidatos**, la columna **ACCION** incluye **📋 Copiar función**. El texto copiado se genera en `src/lib/candidate-copy.ts` y contiene la función `Valido_disco()` completa más una invocación final construida con el **PATH completo** de la fila:
+
+```bash
+Valido_disco /dev/oracleasm/DISCO_1
+```
+
+El path se copia tal cual; no se extrae el basename ni se añade `/dev/`. Si la fila no tiene PATH, el botón queda deshabilitado.
 
 ## Ajustes desde la interfaz (engranaje ⚙)
 

@@ -419,6 +419,13 @@ td {
   min-width: 70px;
 }
 
+.action-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
 .action-link {
   display: inline-flex;
   align-items: center;
@@ -437,9 +444,19 @@ td {
   background: rgba(56, 189, 248, 0.16);
 }
 
+.action-link--copy {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(148, 163, 184, 0.08);
+  color: #cbd5e1;
+}
+
+.action-link--copy:hover {
+  background: rgba(148, 163, 184, 0.16);
+}
+
 .action-link:disabled {
   opacity: 0.65;
-  cursor: wait;
+  cursor: not-allowed;
 }
 
 .action-empty {

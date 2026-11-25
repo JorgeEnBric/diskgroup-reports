@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { buildCandidateCopyText } from '../lib/candidate-copy';
 import type { QueryMeta, QueryResult } from '../lib/types';
 
 interface Props {
@@ -21,6 +23,34 @@ export default function ReportTable({
   onClose,
   closeLabel = 'Cerrar sección',
 }: Props) {
+  const [copiedKey, setCopiedKey] = useState('');
+  const [copyErrorKey, setCopyErrorKey] = useState('');
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(
+    () => () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    },
+    [],
+  );
+
+  async function copyCandidateFunction(path: string, key: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(buildCandidateCopyText(path));
+      setCopiedKey(key);
+      setCopyErrorKey('');
+    } catch {
+      setCopiedKey('');
+      setCopyErrorKey(key);
+    }
+
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => {
+      setCopiedKey('');
+      setCopyErrorKey('');
+    }, 2000);
+  }
+
   const closeButton = onClose ? (
     <button
       type="button"
@@ -74,7 +104,9 @@ export default function ReportTable({
             .filter((key) => key !== '__status')
             .map((key) => ({ key, label: key, kind: undefined }));
 
-        const showDiskAction = (result.sourceId ?? result.id) === 'dg_summary';
+        const sourceId = result.sourceId ?? result.id;
+        const showDiskAction = sourceId === 'dg_summary';
+        const showCopyFunction = sourceId === 'dg_disks';
 
         return (
           <article class="query-block" key={result.id}>
@@ -101,6 +133,8 @@ export default function ReportTable({
                   <tbody>
                     {result.rows.map((row, index) => {
                       const diskgroupName = row.NAME;
+                      const diskPath = (row.PATH ?? '').trim();
+                      const rowKey = `${result.id}:${index}`;
                       const isLoading = loadingDisks.includes(diskgroupName);
 
                       return (
@@ -109,20 +143,41 @@ export default function ReportTable({
                             <td key={column.key}>{row[column.key] || '—'}</td>
                           ))}
                           <td>
-                            {showDiskAction && onShowDisks && diskgroupName ? (
-                              <button
-                                type="button"
-                                class="action-link"
-                                disabled={isLoading}
-                                title={`Ver discos del diskgroup ${diskgroupName}`}
-                                onClick={() => onShowDisks(diskgroupName)}
-                              >
-                                <span aria-hidden="true">🔍</span>
-                                {isLoading ? 'Consultando…' : 'Ver discos'}
-                              </button>
-                            ) : (
-                              <span class="action-empty">—</span>
-                            )}
+                            <div class="action-cell">
+                              {showDiskAction && onShowDisks && diskgroupName ? (
+                                <button
+                                  type="button"
+                                  class="action-link"
+                                  disabled={isLoading}
+                                  title={`Ver discos del diskgroup ${diskgroupName}`}
+                                  onClick={() => onShowDisks(diskgroupName)}
+                                >
+                                  <span aria-hidden="true">🔍</span>
+                                  {isLoading ? 'Consultando…' : 'Ver discos'}
+                                </button>
+                              ) : null}
+
+                              {showCopyFunction ? (
+                                <button
+                                  type="button"
+                                  class="action-link action-link--copy"
+                                  disabled={!diskPath}
+                                  title={diskPath ? `Copiar función para ${diskPath}` : 'Sin PATH para copiar'}
+                                  onClick={() => void copyCandidateFunction(diskPath, rowKey)}
+                                >
+                                  <span aria-hidden="true">📋</span>
+                                  {copiedKey === rowKey
+                                    ? 'Copiado ✓'
+                                    : copyErrorKey === rowKey
+                                      ? 'No se pudo copiar'
+                                      : 'Copiar función'}
+                                </button>
+                              ) : null}
+
+                              {!showDiskAction && !showCopyFunction ? (
+                                <span class="action-empty">—</span>
+                              ) : null}
+                            </div>
                           </td>
                         </tr>
                       );
