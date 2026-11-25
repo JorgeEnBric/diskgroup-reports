@@ -1,0 +1,40 @@
+---
+import '@xterm/xterm/css/xterm.css';
+import '../styles/global.css';
+import QueryRunner from '../components/QueryRunner';
+import SettingsPanel from '../components/SettingsPanel';
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Validación de diskgroups ASM mediante consultas SQL*Plus." />
+    <title>Validador de Diskgroups</title>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">DG</span>
+          <div>
+            <h1>Validador de Diskgroups</h1>
+            <p>Consultas ASM ejecutadas con SQL*Plus en una PTY real</p>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <SettingsPanel client:load />
+          <span class="topbar-tag">Sin login · Uso local</span>
+        </div>
+      </header>
+
+      <QueryRunner client:load />
+
+      <footer class="footer">
+        <span>Herramienta local — el tráfico se limita a 127.0.0.1</span>
+        <span>Las credenciales nunca se envían al navegador</span>
+      </footer>
+    </div>
+  </body>
+</html>
