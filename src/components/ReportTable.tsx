@@ -1,4 +1,4 @@
-import type { CheckStatus, QueryMeta, QueryResult } from '../lib/types';
+import type { QueryMeta, QueryResult } from '../lib/types';
 
 interface Props {
   results: QueryResult[];
@@ -7,16 +7,8 @@ interface Props {
   loadingDisks?: string[];
   title?: string;
   notice?: string;
-}
-
-function Badge({ status }: { status: CheckStatus }) {
-  return <span class={`badge badge--${status.toLowerCase()}`}>{status}</span>;
-}
-
-function overall(results: QueryResult[]): CheckStatus {
-  if (results.some((result) => result.status === 'ERROR')) return 'ERROR';
-  if (results.some((result) => result.status === 'WARN')) return 'WARN';
-  return 'OK';
+  onClose?: () => void;
+  closeLabel?: string;
 }
 
 export default function ReportTable({
@@ -26,7 +18,21 @@ export default function ReportTable({
   loadingDisks = [],
   title = 'Resultado del reporte',
   notice,
+  onClose,
+  closeLabel = 'Cerrar sección',
 }: Props) {
+  const closeButton = onClose ? (
+    <button
+      type="button"
+      class="panel-close"
+      aria-label={closeLabel}
+      title={closeLabel}
+      onClick={onClose}
+    >
+      <span aria-hidden="true">✕</span>
+    </button>
+  ) : null;
+
   if (results.length === 0) {
     return (
       <section class="panel report-panel">
@@ -35,6 +41,7 @@ export default function ReportTable({
             <h2>{title}</h2>
             <p>Sin resultados todavía</p>
           </div>
+          {closeButton}
         </div>
         {notice ? (
           <p class="notice">{notice}</p>
@@ -55,10 +62,7 @@ export default function ReportTable({
           <h2>{title}</h2>
           <p>{results.length} consulta(s) ejecutada(s)</p>
         </div>
-        <div class="overall">
-          <span>Estado global</span>
-          <Badge status={overall(results)} />
-        </div>
+        {closeButton}
       </div>
 
       {notice && <p class="notice">{notice}</p>}
@@ -77,7 +81,6 @@ export default function ReportTable({
             <header class="query-block-header">
               <h3>{result.title}</h3>
               <div class="query-block-meta">
-                <Badge status={result.status} />
                 <small>{result.rows.length} filas · {result.durationMs} ms</small>
               </div>
             </header>

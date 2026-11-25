@@ -60,6 +60,7 @@ El servidor compilado escucha en `127.0.0.1:4321` (configurable en `astro.config
 3. Pulsa **Ejecutar consultas**. Verás la salida real de SQLcl/SQL\*Plus en el terminal.
 4. Revisa la tabla de resultados y pulsa **Descargar PDF**.
 5. En la tabla **1. Diskgroups ASM**, usa la columna **ACCION → 🔍 Ver discos** para consultar los discos de ese diskgroup. El resultado se añade como una sección nueva sin borrar las consultas maestras y también entra en el PDF.
+6. Cada sección de discos tiene un botón **✕** para cerrarla. Puedes tener varias abiertas a la vez; al cerrar una desaparece del DOM y de futuros PDF.
 
 ## Discos del diskgroup
 
@@ -78,6 +79,9 @@ ORDER BY name;
 - El nombre se toma de la fila clickeada y se valida en servidor con `/^[A-Za-z0-9_]{1,30}$/`; el navegador no puede enviar SQL libre.
 - Incluye `set lines 180 pages 200` y sentencias `col ... format` para evitar desbordes en SQLcl.
 - `HEADER_STATUS <> 'MEMBER'` o `STATE <> 'NORMAL'` se marca como ERROR; sin filas se marca WARN.
+- Si pulsas de nuevo **Ver discos** en el mismo diskgroup, se refresca su tarjeta; no se crea un duplicado.
+- Cerrar una tarjeta solo la quita de la página: el job en servidor continúa, pero su resultado se ignora.
+- Las tablas no muestran badges de estado (`OK`/`WARN`/`ERROR`). El indicador superior de ejecución se conserva.
 
 ## Ajustes desde la interfaz (engranaje ⚙)
 

@@ -13,6 +13,15 @@ const statusLabel: Record<JobStatus | 'idle', string> = {
   cancelled: 'Cancelado',
 };
 
+interface DiskPanel {
+  key: string;
+  diskgroupName: string;
+  jobId?: string;
+  loading: boolean;
+  result?: QueryResult;
+  error: string;
+}
+
 export default function QueryRunner() {
   const [diskgroup, setDiskgroup] = useState('DATA');
   const [queries, setQueries] = useState<QueryMeta[]>([]);
@@ -23,11 +32,26 @@ export default function QueryRunner() {
   const [error, setError] = useState('');
   const [jobId, setJobId] = useState('');
   const [connectionLabel, setConnectionLabel] = useState('');
-  const [detailResults, setDetailResults] = useState<QueryResult[]>([]);
-  const [detailError, setDetailError] = useState('');
-  const [loadingDisks, setLoadingDisks] = useState<string[]>([]);
+  const [diskPanels, setDiskPanels] = useState<DiskPanel[]>([]);
   const eventSourceRef = useRef<EventSource | null>(null);
-  const detailSourcesRef = useRef<Set<EventSource>>(new Set());
+  const detailSourcesRef = useRef<Map<string, EventSource>>(new Map());
+  const detailTokensRef = useRef<Map<string, number>>(new Map());
+  const pendingOpensRef = useRef<Set<string>>(new Set());
+
+  function patchPanel(key: string, patch: Partial<DiskPanel>): void {
+    setDiskPanels((previous) =>
+      previous.map((panel) => (panel.key === key ? { ...panel, ...patch } : panel)),
+    );
+  }
+
+  function invalidateDiskRequest(key: string): void {
+    detailTokensRef.current.set(key, (detailTokensRef.current.get(key) ?? 0) + 1);
+  }
+
+  function closeAllDiskSources(): void {
+    for (const source of detailSourcesRef.current.values()) source.close();
+    detailSourcesRef.current.clear();
+  }
 
   useEffect(() => {
     let active = true;
@@ -49,8 +73,7 @@ export default function QueryRunner() {
   useEffect(
     () => () => {
       eventSourceRef.current?.close();
-      for (const source of detailSourcesRef.current) source.close();
-      detailSourcesRef.current.clear();
+      closeAllDiskSources();
     },
     [],
   );
@@ -77,10 +100,12 @@ export default function QueryRunner() {
 
   async function start(): Promise<void> {
     eventSourceRef.current?.close();
+    closeAllDiskSources();
+    for (const key of detailTokensRef.current.keys()) invalidateDiskRequest(key);
+    pendingOpensRef.current.clear();
+    setDiskPanels([]);
     setOutput('');
     setResults([]);
-    setDetailResults([]);
-    setDetailError('');
     setError('');
     setJobId('');
     setStatus('running');
@@ -152,12 +177,45 @@ export default function QueryRunner() {
     }).catch(() => undefined);
   }
 
+  function closeDisks(rawName: string): void {
+    const key = rawName.trim().toUpperCase();
+    invalidateDiskRequest(key);
+    detailSourcesRef.current.get(key)?.close();
+    detailSourcesRef.current.delete(key);
+    pendingOpensRef.current.delete(key);
+    setDiskPanels((previous) => previous.filter((panel) => panel.key !== key));
+  }
+
   async function openDisks(rawName: string): Promise<void> {
     const diskgroupName = rawName.trim().toUpperCase();
-    if (!isValidDiskgroup(diskgroupName) || loadingDisks.includes(diskgroupName)) return;
+    if (!isValidDiskgroup(diskgroupName)) return;
 
-    setDetailError('');
-    setLoadingDisks((previous) => [...previous, diskgroupName]);
+    const existing = diskPanels.find((panel) => panel.key === diskgroupName);
+    if (pendingOpensRef.current.has(diskgroupName) || existing?.loading) return;
+    pendingOpensRef.current.add(diskgroupName);
+    const releasePending = () => pendingOpensRef.current.delete(diskgroupName);
+
+    invalidateDiskRequest(diskgroupName);
+    const token = detailTokensRef.current.get(diskgroupName)!;
+    const isCurrent = () => detailTokensRef.current.get(diskgroupName) === token;
+
+    detailSourcesRef.current.get(diskgroupName)?.close();
+    detailSourcesRef.current.delete(diskgroupName);
+
+    setDiskPanels((previous) => {
+      const found = previous.find((panel) => panel.key === diskgroupName);
+      const fresh: DiskPanel = {
+        key: diskgroupName,
+        diskgroupName,
+        jobId: undefined,
+        loading: true,
+        result: undefined,
+        error: '',
+      };
+      return found
+        ? previous.map((panel) => (panel.key === diskgroupName ? fresh : panel))
+        : [...previous, fresh];
+    });
 
     try {
       const response = await fetch('/api/run-disks', {
@@ -165,52 +223,74 @@ export default function QueryRunner() {
         headers: { 'content-type': 'application/json', 'x-requested-with': 'XMLHttpRequest' },
         body: JSON.stringify({ diskgroupName }),
       });
+      if (!isCurrent()) {
+        releasePending();
+        return;
+      }
+
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error ?? 'No se pudo consultar los discos.');
       }
 
-      const source = new EventSource(`/api/stream?jobId=${encodeURIComponent(data.jobId as string)}`);
-      detailSourcesRef.current.add(source);
+      const newJobId = data.jobId as string;
+      patchPanel(diskgroupName, { jobId: newJobId });
+
+      const source = new EventSource(`/api/stream?jobId=${encodeURIComponent(newJobId)}`);
+      detailSourcesRef.current.set(diskgroupName, source);
+      let settled = false;
 
       const finish = () => {
+        if (settled) return;
+        settled = true;
+        releasePending();
         source.close();
-        detailSourcesRef.current.delete(source);
-        setLoadingDisks((previous) => previous.filter((name) => name !== diskgroupName));
+        if (detailSourcesRef.current.get(diskgroupName) === source) {
+          detailSourcesRef.current.delete(diskgroupName);
+        }
+        if (isCurrent()) patchPanel(diskgroupName, { loading: false });
       };
 
       source.addEventListener('snapshot', (event) => {
+        if (settled || !isCurrent()) return;
         const snapshot = JSON.parse((event as MessageEvent<string>).data) as JobSnapshot;
-        setDetailResults((previous) => [
-          ...previous.filter((result) => !snapshot.results.some((item) => item.id === result.id)),
-          ...snapshot.results,
-        ]);
-        if (snapshot.error) setDetailError(snapshot.error);
+        patchPanel(diskgroupName, {
+          result: snapshot.results[0],
+          error: snapshot.error ?? '',
+        });
         if (snapshot.status !== 'running') finish();
       });
 
       source.addEventListener('result', (event) => {
+        if (settled || !isCurrent()) return;
         const result = JSON.parse((event as MessageEvent<string>).data) as QueryResult;
-        setDetailResults((previous) => [...previous.filter((item) => item.id !== result.id), result]);
+        patchPanel(diskgroupName, { result });
       });
 
       source.addEventListener('status', (event) => {
+        if (settled || !isCurrent()) return;
         const payload = JSON.parse((event as MessageEvent<string>).data) as {
           status: JobStatus;
           error?: string;
         };
-        if (payload.error) setDetailError(payload.error);
+        if (payload.error) patchPanel(diskgroupName, { error: payload.error });
         if (payload.status !== 'running') finish();
       });
 
       source.addEventListener('done', finish);
+
       source.onerror = () => {
-        setDetailError('Se perdió la conexión durante la consulta de discos.');
+        if (settled || !isCurrent()) return;
+        patchPanel(diskgroupName, { error: 'Se perdió la conexión durante la consulta de discos.' });
         finish();
       };
     } catch (cause) {
-      setDetailError(cause instanceof Error ? cause.message : String(cause));
-      setLoadingDisks((previous) => previous.filter((name) => name !== diskgroupName));
+      releasePending();
+      if (!isCurrent()) return;
+      patchPanel(diskgroupName, {
+        error: cause instanceof Error ? cause.message : String(cause),
+        loading: false,
+      });
     }
   }
 
@@ -222,7 +302,13 @@ export default function QueryRunner() {
 
   const busy = status === 'running';
   const diskgroupValid = isValidDiskgroup(diskgroup.trim().toUpperCase());
-  const allResults = [...results, ...detailResults];
+  const loadingDisks = diskPanels.filter((panel) => panel.loading).map((panel) => panel.diskgroupName);
+  const allResults = [
+    ...results,
+    ...diskPanels
+      .map((panel) => panel.result)
+      .filter((result): result is QueryResult => Boolean(result)),
+  ];
 
   return (
     <main class="layout">
@@ -313,14 +399,17 @@ export default function QueryRunner() {
         loadingDisks={loadingDisks}
       />
 
-      {(detailResults.length > 0 || loadingDisks.length > 0 || detailError) && (
+      {diskPanels.map((panel) => (
         <ReportTable
-          results={detailResults}
+          key={panel.key}
+          results={panel.result ? [panel.result] : []}
           queries={queries}
-          title="Discos del diskgroup"
-          notice={detailError || (loadingDisks.length > 0 ? 'Consultando discos…' : undefined)}
+          title={`Discos del diskgroup ${panel.diskgroupName}`}
+          notice={panel.error || (panel.loading ? 'Consultando discos…' : undefined)}
+          onClose={() => closeDisks(panel.diskgroupName)}
+          closeLabel={`Cerrar discos del diskgroup ${panel.diskgroupName}`}
         />
-      )}
+      ))}
     </main>
   );
 }

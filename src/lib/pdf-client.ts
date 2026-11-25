@@ -10,12 +10,6 @@ function text(value: unknown): string {
   return value === null || value === undefined ? '' : String(value);
 }
 
-function worst(results: QueryResult[]): string {
-  if (results.some((result) => result.status === 'ERROR')) return 'ERROR';
-  if (results.some((result) => result.status === 'WARN')) return 'WARN';
-  return 'OK';
-}
-
 export async function downloadReport({ diskgroup, results, queries }: PdfInput): Promise<void> {
   const [{ jsPDF }, autoTableModule] = await Promise.all([import('jspdf'), import('jspdf-autotable')]);
   const autoTable = (autoTableModule as any).default ?? (autoTableModule as any).autoTable;
@@ -44,7 +38,6 @@ export async function downloadReport({ diskgroup, results, queries }: PdfInput):
     ['Etiqueta', diskgroup],
     ['Fecha', generatedAt.toLocaleString()],
     ['Consultas', `${results.length}`],
-    ['Estado global', worst(results)],
   ];
   for (const [label, value] of metaLines) {
     doc.setFont('helvetica', 'bold');
@@ -74,7 +67,7 @@ export async function downloadReport({ diskgroup, results, queries }: PdfInput):
     doc.setFontSize(10);
     doc.setTextColor(71, 85, 105);
     doc.text(
-      `Estado: ${result.status}   |   Filas: ${result.rows.length}   |   Duracion: ${result.durationMs} ms`,
+      `Filas: ${result.rows.length}   |   Duracion: ${result.durationMs} ms`,
       45,
       y + 16,
     );
@@ -96,14 +89,6 @@ export async function downloadReport({ diskgroup, results, queries }: PdfInput):
         styles: { fontSize: 7, cellPadding: 3, overflow: 'ellipsize' },
         headStyles: { fillColor: [30, 64, 175], textColor: 255, fontSize: 7 },
         alternateRowStyles: { fillColor: [241, 245, 249] },
-        didParseCell(data: any) {
-          if (data.section === 'body' && data.column.index === 0) {
-            const status = result.rows[data.row.index]?.__status;
-            if (status === 'ERROR') data.cell.styles.textColor = [190, 18, 60];
-            if (status === 'WARN') data.cell.styles.textColor = [180, 83, 9];
-            if (status === 'OK') data.cell.styles.textColor = [22, 101, 52];
-          }
-        },
       });
       y = (doc as any).lastAutoTable.finalY + 28;
     } else {
@@ -127,15 +112,9 @@ export async function downloadReport({ diskgroup, results, queries }: PdfInput):
   doc.text('Resumen', 45, y);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
-  const counts = {
-    OK: results.filter((result) => result.status === 'OK').length,
-    WARN: results.filter((result) => result.status === 'WARN').length,
-    ERROR: results.filter((result) => result.status === 'ERROR').length,
-  };
+  const totalRows = results.reduce((sum, result) => sum + result.rows.length, 0);
   y += 24;
-  doc.text(`OK: ${counts.OK}    WARN: ${counts.WARN}    ERROR: ${counts.ERROR}`, 45, y);
-  y += 18;
-  doc.text(`Resultado global: ${worst(results)}`, 45, y);
+  doc.text(`Consultas: ${results.length}    Filas totales: ${totalRows}`, 45, y);
 
   // ---------- Pie de página ----------
   const totalPages = doc.getNumberOfPages();

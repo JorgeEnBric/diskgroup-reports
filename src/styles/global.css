@@ -333,14 +333,6 @@ input[type="text"]:focus {
   border-bottom: 1px solid var(--border);
 }
 
-.overall {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
 .query-block {
   padding: 18px 0;
   border-bottom: 1px solid var(--border);
@@ -372,18 +364,26 @@ input[type="text"]:focus {
   font-size: 11px;
 }
 
-.badge {
-  display: inline-block;
-  border-radius: 999px;
-  padding: 3px 9px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+.panel-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
 }
 
-.badge--ok { background: rgba(22, 163, 74, 0.16); color: #4ade80; }
-.badge--warn { background: rgba(217, 119, 6, 0.16); color: #fbbf24; }
-.badge--error { background: rgba(220, 38, 38, 0.16); color: #f87171; }
+.panel-close:hover {
+  border-color: rgba(220, 38, 38, 0.45);
+  background: rgba(220, 38, 38, 0.12);
+  color: #f87171;
+}
 
 .table-wrap {
   overflow-x: auto;
