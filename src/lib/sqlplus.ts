@@ -8,6 +8,33 @@ import { extractOracleErrors, parseSpool, rowsToObjects } from './parse';
 import { getQuery, renderSql } from './queries';
 import type { CheckStatus, QueryResult } from './types';
 
+/** Oculta los warnings de JLine/JVM en pantalla sin perder el log crudo del job. */
+function createOutputFilter() {
+  let pending = '';
+  const shouldDrop = (line: string): boolean =>
+    /^\s*(?:WARNING:|Picked up JAVA_TOOL_OPTIONS:)/i.test(line);
+
+  return {
+    push(data: string): string {
+      pending += data;
+      const parts = pending.split(/(\r\n|\n|\r)/);
+      pending = parts.pop() ?? '';
+      let visible = '';
+      for (let index = 0; index < parts.length; index += 2) {
+        const line = parts[index] ?? '';
+        const eol = parts[index + 1] ?? '';
+        if (!shouldDrop(line)) visible += line + eol;
+      }
+      return visible;
+    },
+    flush(): string {
+      const line = pending;
+      pending = '';
+      return line && !shouldDrop(line) ? line : '';
+    },
+  };
+}
+
 function buildScript(job: JobInternal, spoolPaths: Record<string, string>, cfg: Config): string {
   const total = job.queryIds.length;
   const lines = [
@@ -17,16 +44,27 @@ function buildScript(job: JobInternal, spoolPaths: Record<string, string>, cfg: 
     'SET VERIFY OFF',
     'SET FEEDBACK OFF',
     'SET HEADING ON',
-    'SET UNDERLINE OFF',
-    'SET PAGESIZE 50000',
     'SET LINESIZE 32767',
-    `SET COLSEP '${cfg.delimiter}'`,
-    'SET TRIMSPOOL ON',
     'SET TERMOUT ON',
+  ];
+
+  if (cfg.sqlClient === 'sqlcl') {
+    // SQLcl usa SQLFORMAT en lugar de COLSEP / UNDERLINE / PAGESIZE.
+    lines.push(`SET SQLFORMAT DELIMITED ${cfg.delimiter} " "`);
+  } else {
+    lines.push(
+      'SET UNDERLINE OFF',
+      'SET PAGESIZE 50000',
+      `SET COLSEP '${cfg.delimiter}'`,
+      'SET TRIMSPOOL ON',
+    );
+  }
+
+  lines.push(
     'PROMPT ============================================================',
     `PROMPT Validando diskgroup ${job.diskgroup} (${total} consultas)`,
     'PROMPT ============================================================',
-  ];
+  );
 
   job.queryIds.forEach((id, index) => {
     const query = getQuery(id);
@@ -103,38 +141,54 @@ export async function executeJob(job: JobInternal): Promise<void> {
     const spoolPaths: Record<string, string> = {};
 
     job.queryIds.forEach((id, index) => {
-      // SQL*Plus en Windows acepta barras normales en SPOOL.
+      // SQL*Plus y SQLcl aceptan barras normales en SPOOL, incluso en Windows.
       spoolPaths[id] = join(workDir, `q${index + 1}.txt`).replace(/\\/g, '/');
     });
 
     await writeFile(scriptPath, buildScript(job, spoolPaths, cfg), 'utf8');
 
-    appendOutput(job, `[INFO] Ejecutando ${cfg.sqlplusBin}\r\n`);
+    const clientName = cfg.sqlClient === 'sqlcl' ? 'SQLcl' : 'SQL*Plus';
+    appendOutput(job, `[INFO] Ejecutando ${clientName}: ${cfg.sqlplusBin}\r\n`);
     if (cfg.directConnection) {
       appendOutput(job, `[INFO] Conexión directa: ${cfg.dbConnect}\r\n`);
     }
+    if (cfg.javaOpts) {
+      appendOutput(job, `[INFO] Opciones JVM activas: ${cfg.javaOpts}\r\n`);
+    }
 
-    const childEnv: Record<string, string> = {
-      ...(process.env as Record<string, string>),
-      NLS_LANG: cfg.nlsLang,
-    };
+    const childEnv: Record<string, string> = { ...(process.env as Record<string, string>) };
+
+    // Un TNS_ADMIN vacío provoca el error TNSHelper.getTnsnamesDir en SQLcl.
+    delete childEnv.TNS_ADMIN;
+    delete childEnv.JAVA_TOOL_OPTIONS;
+    childEnv.NLS_LANG = cfg.nlsLang;
     if (cfg.tnsAdmin) childEnv.TNS_ADMIN = cfg.tnsAdmin;
+    if (cfg.javaOpts) childEnv.JAVA_TOOL_OPTIONS = cfg.javaOpts;
 
-    const child = pty.spawn(
-      cfg.sqlplusBin,
-      ['-S', '-L', `${cfg.dbUser}/${cfg.dbPassword}@${cfg.dbConnect}`, `@${scriptPath}`],
-      {
-        name: 'xterm-color',
-        cols: 160,
-        rows: 32,
-        cwd: workDir,
-        env: childEnv,
-      },
-    );
+    if (cfg.sqlClient === 'sqlcl') {
+      childEnv.TERM = 'dumb';
+      childEnv.SQLPATH = workDir;
+    }
+
+    const connection = `${cfg.dbUser}/${cfg.dbPassword}@${cfg.dbConnect}`;
+    const args =
+      cfg.sqlClient === 'sqlcl'
+        ? ['-S', '-L', '-noupdates', '-nohistory', connection, `@${scriptPath}`]
+        : ['-S', '-L', connection, `@${scriptPath}`];
+
+    const child = pty.spawn(cfg.sqlplusBin, args, {
+      // node-pty usa `name` como TERM en Unix; en SQLcl queremos un terminal no interactivo.
+      name: cfg.sqlClient === 'sqlcl' ? 'dumb' : 'xterm-color',
+      cols: 160,
+      rows: 32,
+      cwd: workDir,
+      env: childEnv,
+    });
 
     job.kill = () => child.kill();
 
-    child.onData((data: string) => appendOutput(job, data));
+    const filter = createOutputFilter();
+    child.onData((data: string) => appendOutput(job, data, filter.push(data)));
 
     timeout = setTimeout(() => {
       appendOutput(job, `\r\n[ERROR] Timeout de ${cfg.timeoutMs} ms alcanzado.\r\n`);
@@ -142,7 +196,11 @@ export async function executeJob(job: JobInternal): Promise<void> {
     }, cfg.timeoutMs);
 
     await new Promise<void>((resolve) => {
-      child.onExit(() => resolve());
+      child.onExit(() => {
+        const remaining = filter.flush();
+        if (remaining) appendOutput(job, '', remaining);
+        resolve();
+      });
     });
 
     if (timeout) clearTimeout(timeout);

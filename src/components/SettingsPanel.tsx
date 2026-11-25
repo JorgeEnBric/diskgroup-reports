@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'preact/hooks';
-import { KEEP_PASSWORD, type PublicSettings } from '../lib/settings-shared';
+import {
+  DEFAULT_SQL_CLIENT,
+  KEEP_PASSWORD,
+  type PublicSettings,
+  type SqlClient,
+} from '../lib/settings-shared';
 
 interface FormState {
+  sqlClient: SqlClient;
   sqlplusBin: string;
   dbUser: string;
   dbPassword: string;
@@ -13,9 +19,11 @@ interface FormState {
   tnsAdmin: string;
   nlsLang: string;
   timeoutMs: string;
+  javaOpts: string;
 }
 
 const initialForm: FormState = {
+  sqlClient: DEFAULT_SQL_CLIENT,
   sqlplusBin: '',
   dbUser: '',
   dbPassword: '',
@@ -27,6 +35,7 @@ const initialForm: FormState = {
   tnsAdmin: '',
   nlsLang: 'AMERICAN_AMERICA.AL32UTF8',
   timeoutMs: '120000',
+  javaOpts: '',
 };
 
 interface TextFieldProps {
@@ -87,6 +96,7 @@ export default function SettingsPanel() {
         if (!active) return;
         setEnvPath(data.envPath ?? '');
         setForm({
+          sqlClient: data.sqlClient ?? DEFAULT_SQL_CLIENT,
           sqlplusBin: data.sqlplusBin ?? '',
           dbUser: data.dbUser ?? '',
           dbPassword: data.dbPassword ?? '',
@@ -98,6 +108,7 @@ export default function SettingsPanel() {
           tnsAdmin: data.tnsAdmin ?? '',
           nlsLang: data.nlsLang ?? 'AMERICAN_AMERICA.AL32UTF8',
           timeoutMs: String(data.timeoutMs ?? 120000),
+          javaOpts: data.javaOpts ?? '',
         });
       })
       .catch(() => {
@@ -123,6 +134,11 @@ export default function SettingsPanel() {
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]): void {
     setForm((previous) => ({ ...previous, [key]: value }));
+  }
+
+  function readClient(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    update('sqlClient', value === 'sqlplus' ? 'sqlplus' : DEFAULT_SQL_CLIENT);
   }
 
   async function save(): Promise<void> {
@@ -151,6 +167,12 @@ export default function SettingsPanel() {
     }
   }
 
+  const isSqlcl = form.sqlClient === 'sqlcl';
+  const binaryLabel = isSqlcl ? 'Ruta de sql.exe / sqlcl.exe' : 'Ruta de sqlplus.exe';
+  const binaryPlaceholder = isSqlcl
+    ? 'C:/oracle/sqlcl/bin/sql.exe'
+    : 'C:/oracle/instantclient_19_20/sqlplus.exe';
+
   return (
     <>
       <button class="gear-button" title="Ajustes (.env)" aria-label="Abrir ajustes" onClick={() => setOpen(true)}>
@@ -168,7 +190,7 @@ export default function SettingsPanel() {
             <header class="modal-header">
               <div>
                 <h2>Ajustes</h2>
-                <p>Edita el archivo .env usado por SQL*Plus.</p>
+                <p>Edita el archivo .env usado por {isSqlcl ? 'SQLcl' : 'SQL*Plus'}.</p>
               </div>
               <button class="modal-close" aria-label="Cerrar" onClick={() => setOpen(false)}>
                 ✕
@@ -194,11 +216,19 @@ export default function SettingsPanel() {
                   </label>
 
                   <div class="settings-grid">
+                    <label class="settings-field">
+                      <span>Cliente Oracle</span>
+                      <select value={form.sqlClient} onChange={(event) => readClient(event as Event)}>
+                        <option value="sqlcl">SQLcl (sql.exe) — recomendado</option>
+                        <option value="sqlplus">SQL*Plus (sqlplus.exe)</option>
+                      </select>
+                      <small>SQLcl es el cliente por defecto.</small>
+                    </label>
                     <TextField
-                      label="Ruta de sqlplus.exe"
+                      label={binaryLabel}
                       value={form.sqlplusBin}
                       onValue={(value) => update('sqlplusBin', value)}
-                      placeholder="C:/oracle/instantclient_19_20/sqlplus.exe"
+                      placeholder={binaryPlaceholder}
                     />
                     <TextField
                       label="Usuario"
@@ -257,11 +287,13 @@ export default function SettingsPanel() {
                         label="TNS_ADMIN"
                         value={form.tnsAdmin}
                         onValue={(value) => update('tnsAdmin', value)}
-                        placeholder="C:/oracle/instantclient/network/admin"
+                        placeholder={isSqlcl ? 'C:/oracle/sqlcl/network/admin' : 'C:/oracle/instantclient/network/admin'}
+                        hint="Déjalo vacío para usar la ubicación por defecto de Oracle."
                       />
                     </div>
                   )}
 
+                  <h3 class="settings-section">Opciones avanzadas</h3>
                   <div class="settings-grid">
                     <TextField
                       label="NLS_LANG"
@@ -269,6 +301,15 @@ export default function SettingsPanel() {
                       onValue={(value) => update('nlsLang', value)}
                       placeholder="AMERICAN_AMERICA.AL32UTF8"
                     />
+                    {isSqlcl && (
+                      <TextField
+                        label="JAVA_OPTS"
+                        value={form.javaOpts}
+                        onValue={(value) => update('javaOpts', value)}
+                        placeholder="--enable-native-access=ALL-UNNAMED ..."
+                        hint="Se inyecta como JAVA_TOOL_OPTIONS. Déjalo vacío si tu Java no admite estos flags."
+                      />
+                    )}
                   </div>
 
                   {envPath && (

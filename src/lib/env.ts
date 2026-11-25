@@ -1,14 +1,20 @@
 import 'dotenv/config';
 import { rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { KEEP_PASSWORD, type PublicSettings } from './settings-shared';
+import {
+  DEFAULT_SQL_CLIENT,
+  KEEP_PASSWORD,
+  type PublicSettings,
+  type SqlClient,
+} from './settings-shared';
 
-export { KEEP_PASSWORD } from './settings-shared';
-export type { PublicSettings } from './settings-shared';
+export { DEFAULT_SQL_CLIENT, KEEP_PASSWORD } from './settings-shared';
+export type { PublicSettings, SqlClient } from './settings-shared';
 
 export const ENV_PATH = join(process.cwd(), '.env');
 
 const KEYS = [
+  'SQL_CLIENT',
   'SQLPLUS_BIN',
   'DB_USER',
   'DB_PASSWORD',
@@ -20,13 +26,24 @@ const KEYS = [
   'TNS_ADMIN',
   'NLS_LANG',
   'JOB_TIMEOUT_MS',
+  'JAVA_OPTS',
 ] as const;
 
 function read(name: string, fallback = ''): string {
   return (process.env[name] ?? fallback).trim();
 }
 
+function readClient(sqlplusBin: string): SqlClient {
+  const configured = read('SQL_CLIENT').toLowerCase();
+  if (configured === 'sqlplus' || configured === 'sqlcl') return configured;
+
+  // Si no se configuró explícitamente, se infiere del binario; por defecto SQLcl.
+  if (/sqlplus/i.test(sqlplusBin) && !/sqlcl/i.test(sqlplusBin)) return 'sqlplus';
+  return DEFAULT_SQL_CLIENT;
+}
+
 export interface Config {
+  sqlClient: SqlClient;
   sqlplusBin: string;
   dbUser: string;
   dbPassword: string;
@@ -38,14 +55,17 @@ export interface Config {
   tnsAdmin: string;
   nlsLang: string;
   timeoutMs: number;
+  javaOpts: string;
   delimiter: string;
 }
 
 /** Se lee en cada petición para que los cambios del panel de ajustes se apliquen al instante. */
 export function getConfig(): Config {
+  const sqlplusBin = read('SQLPLUS_BIN');
   const timeout = Number(read('JOB_TIMEOUT_MS', '120000'));
   return {
-    sqlplusBin: read('SQLPLUS_BIN'),
+    sqlClient: readClient(sqlplusBin),
+    sqlplusBin,
     dbUser: read('DB_USER'),
     dbPassword: read('DB_PASSWORD'),
     dbConnect: read('DB_CONNECT'),
@@ -56,6 +76,7 @@ export function getConfig(): Config {
     tnsAdmin: read('TNS_ADMIN'),
     nlsLang: read('NLS_LANG', 'AMERICAN_AMERICA.AL32UTF8'),
     timeoutMs: Number.isFinite(timeout) && timeout > 0 ? timeout : 120000,
+    javaOpts: read('JAVA_OPTS'),
     delimiter: '|~|',
   };
 }
@@ -64,6 +85,7 @@ export function getConfig(): Config {
 export function publicSettings(): PublicSettings {
   const cfg = getConfig();
   return {
+    sqlClient: cfg.sqlClient,
     sqlplusBin: cfg.sqlplusBin,
     dbUser: cfg.dbUser,
     dbPasswordSet: Boolean(cfg.dbPassword),
@@ -76,10 +98,12 @@ export function publicSettings(): PublicSettings {
     tnsAdmin: cfg.tnsAdmin,
     nlsLang: cfg.nlsLang,
     timeoutMs: cfg.timeoutMs,
+    javaOpts: cfg.javaOpts,
   };
 }
 
 export interface SettingsInput {
+  sqlClient?: unknown;
   sqlplusBin?: unknown;
   dbUser?: unknown;
   dbPassword?: unknown;
@@ -91,6 +115,7 @@ export interface SettingsInput {
   tnsAdmin?: unknown;
   nlsLang?: unknown;
   timeoutMs?: unknown;
+  javaOpts?: unknown;
 }
 
 function str(value: unknown, max = 500): string {
@@ -98,6 +123,7 @@ function str(value: unknown, max = 500): string {
 }
 
 export interface NormalizedSettings {
+  sqlClient: SqlClient;
   sqlplusBin: string;
   dbUser: string;
   dbPassword: string;
@@ -109,6 +135,7 @@ export interface NormalizedSettings {
   tnsAdmin: string;
   nlsLang: string;
   timeoutMs: number;
+  javaOpts: string;
 }
 
 export function normalizeSettings(input: SettingsInput): NormalizedSettings {
@@ -117,6 +144,9 @@ export function normalizeSettings(input: SettingsInput): NormalizedSettings {
     input.directConnection === true ||
     input.directConnection === 'true' ||
     input.directConnection === 'on';
+
+  const clientInput = str(input.sqlClient ?? current.sqlClient, 20).toLowerCase();
+  const sqlClient: SqlClient = clientInput === 'sqlplus' ? 'sqlplus' : DEFAULT_SQL_CLIENT;
 
   const passwordInput = str(input.dbPassword, 200);
   const dbPassword = passwordInput === KEEP_PASSWORD ? current.dbPassword : passwordInput;
@@ -133,6 +163,7 @@ export function normalizeSettings(input: SettingsInput): NormalizedSettings {
   const timeout = Number(str(input.timeoutMs, 10));
 
   return {
+    sqlClient,
     sqlplusBin: str(input.sqlplusBin, 500),
     dbUser: str(input.dbUser, 200),
     dbPassword,
@@ -144,6 +175,7 @@ export function normalizeSettings(input: SettingsInput): NormalizedSettings {
     tnsAdmin: str(input.tnsAdmin, 500),
     nlsLang: str(input.nlsLang, 100) || 'AMERICAN_AMERICA.AL32UTF8',
     timeoutMs: Number.isFinite(timeout) && timeout > 0 ? Math.min(timeout, 3600000) : 120000,
+    javaOpts: str(input.javaOpts, 2000),
   };
 }
 
@@ -164,6 +196,7 @@ function envLine(key: string, value: string): string {
 export async function saveSettings(input: SettingsInput): Promise<PublicSettings> {
   const settings = normalizeSettings(input);
   const values: Record<string, string> = {
+    SQL_CLIENT: settings.sqlClient,
     SQLPLUS_BIN: settings.sqlplusBin,
     DB_USER: settings.dbUser,
     DB_PASSWORD: settings.dbPassword,
@@ -175,6 +208,7 @@ export async function saveSettings(input: SettingsInput): Promise<PublicSettings
     TNS_ADMIN: settings.tnsAdmin,
     NLS_LANG: settings.nlsLang,
     JOB_TIMEOUT_MS: String(settings.timeoutMs),
+    JAVA_OPTS: settings.javaOpts,
   };
 
   const content = [
@@ -193,7 +227,9 @@ export async function saveSettings(input: SettingsInput): Promise<PublicSettings
 
 export function validateConfig(cfg: Config = getConfig()): string[] {
   const problems: string[] = [];
-  if (!cfg.sqlplusBin) problems.push('Falta SQLPLUS_BIN en los ajustes');
+  const binary = cfg.sqlClient === 'sqlcl' ? 'sql.exe / sqlcl.exe' : 'sqlplus.exe';
+
+  if (!cfg.sqlplusBin) problems.push(`Falta la ruta de ${binary} en los ajustes`);
   if (!cfg.dbUser) problems.push('Falta el usuario de la base de datos');
   if (!cfg.dbPassword) problems.push('Falta la contraseña de la base de datos');
   if (!cfg.dbConnect) {
@@ -208,5 +244,6 @@ export function validateConfig(cfg: Config = getConfig()): string[] {
 
 /** Cadena segura para mostrar en la UI: nunca incluye el password. */
 export function connectionLabel(cfg: Config = getConfig()): string {
-  return cfg.dbConnect ? `sqlplus ${cfg.dbUser}@${cfg.dbConnect}`.trim() : 'sin configurar';
+  const client = cfg.sqlClient === 'sqlcl' ? 'sql' : 'sqlplus';
+  return cfg.dbConnect ? `${client} ${cfg.dbUser}@${cfg.dbConnect}`.trim() : 'sin configurar';
 }

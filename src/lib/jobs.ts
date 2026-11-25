@@ -4,6 +4,8 @@ export interface JobInternal extends JobSnapshot {
   listeners: Set<(event: JobEvent) => void>;
   kill?: () => void;
   timer?: ReturnType<typeof setTimeout>;
+  /** Log completo de la PTY, incluidas las líneas filtradas en pantalla. No se envía al navegador. */
+  rawOutput: string;
 }
 
 const jobs = new Map<string, JobInternal>();
@@ -15,6 +17,7 @@ export function createJob(jobId: string, diskgroup: string, queryIds: string[]):
     queryIds,
     status: 'running',
     output: '',
+    rawOutput: '',
     results: [],
     startedAt: new Date().toISOString(),
     listeners: new Set(),
@@ -51,10 +54,20 @@ export function publish(job: JobInternal, event: JobEvent): void {
   }
 }
 
-export function appendOutput(job: JobInternal, chunk: string): void {
-  if (!chunk) return;
-  job.output += chunk;
-  publish(job, { type: 'output', data: { chunk } });
+/**
+ * Guarda siempre el chunk original en `rawOutput` y publica solo `publishChunk`.
+ * Así podemos ocultar warnings de JVM en el terminal sin perder el log completo.
+ */
+export function appendOutput(job: JobInternal, chunk: string, publishChunk = chunk): void {
+  if (!chunk && !publishChunk) return;
+  job.rawOutput += chunk;
+  job.output += publishChunk;
+  publish(job, { type: 'output', data: { chunk: publishChunk } });
+}
+
+/** Solo para diagnóstico en el servidor; nunca se expone por SSE. */
+export function getRawOutput(job: JobInternal): string {
+  return job.rawOutput;
 }
 
 export function addResult(job: JobInternal, result: QueryResult): void {

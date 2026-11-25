@@ -175,6 +175,24 @@ input[type="text"]:focus {
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
 }
 
+.settings-field input,
+.settings-field select {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 9px;
+  border: 1px solid #334155;
+  background: #0b1220;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+
+.settings-field input:focus,
+.settings-field select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+}
+
 .hint {
   margin-top: 7px;
   color: var(--muted);

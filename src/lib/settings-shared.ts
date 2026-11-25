@@ -1,7 +1,11 @@
-/** Constante y tipos compartidos entre el servidor y la isla de ajustes. */
+/** Constantes y tipos compartidos entre el servidor y la isla de ajustes. */
 export const KEEP_PASSWORD = '__KEEP__';
+export const DEFAULT_SQL_CLIENT = 'sqlcl';
+
+export type SqlClient = 'sqlcl' | 'sqlplus';
 
 export interface PublicSettings {
+  sqlClient: SqlClient;
   sqlplusBin: string;
   dbUser: string;
   dbPasswordSet: boolean;
@@ -14,4 +18,5 @@ export interface PublicSettings {
   tnsAdmin: string;
   nlsLang: string;
   timeoutMs: number;
+  javaOpts: string;
 }
