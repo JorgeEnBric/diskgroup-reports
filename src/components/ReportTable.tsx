@@ -3,6 +3,10 @@ import type { CheckStatus, QueryMeta, QueryResult } from '../lib/types';
 interface Props {
   results: QueryResult[];
   queries: QueryMeta[];
+  onShowDisks?: (diskgroupName: string) => void;
+  loadingDisks?: string[];
+  title?: string;
+  notice?: string;
 }
 
 function Badge({ status }: { status: CheckStatus }) {
@@ -15,14 +19,31 @@ function overall(results: QueryResult[]): CheckStatus {
   return 'OK';
 }
 
-export default function ReportTable({ results, queries }: Props) {
+export default function ReportTable({
+  results,
+  queries,
+  onShowDisks,
+  loadingDisks = [],
+  title = 'Resultado del reporte',
+  notice,
+}: Props) {
   if (results.length === 0) {
     return (
       <section class="panel report-panel">
-        <div class="empty-state">
-          <strong>Sin resultados todavía</strong>
-          <span>Selecciona un diskgroup y ejecuta las consultas para generar el reporte.</span>
+        <div class="report-header">
+          <div>
+            <h2>{title}</h2>
+            <p>Sin resultados todavía</p>
+          </div>
         </div>
+        {notice ? (
+          <p class="notice">{notice}</p>
+        ) : (
+          <div class="empty-state">
+            <strong>Sin resultados todavía</strong>
+            <span>Ejecuta las consultas para generar el reporte.</span>
+          </div>
+        )}
       </section>
     );
   }
@@ -31,7 +52,7 @@ export default function ReportTable({ results, queries }: Props) {
     <section class="panel report-panel">
       <div class="report-header">
         <div>
-          <h2>Resultado del reporte</h2>
+          <h2>{title}</h2>
           <p>{results.length} consulta(s) ejecutada(s)</p>
         </div>
         <div class="overall">
@@ -40,12 +61,16 @@ export default function ReportTable({ results, queries }: Props) {
         </div>
       </div>
 
+      {notice && <p class="notice">{notice}</p>}
+
       {results.map((result) => {
-        const meta = queries.find((query) => query.id === result.id);
+        const meta = queries.find((query) => query.id === (result.sourceId ?? result.id));
         const columns = meta?.columns
           ?? Object.keys(result.rows[0] ?? {})
             .filter((key) => key !== '__status')
             .map((key) => ({ key, label: key, kind: undefined }));
+
+        const showDiskAction = (result.sourceId ?? result.id) === 'dg_summary';
 
         return (
           <article class="query-block" key={result.id}>
@@ -67,18 +92,38 @@ export default function ReportTable({ results, queries }: Props) {
                       {columns.map((column) => (
                         <th key={column.key}>{column.label}</th>
                       ))}
-                      <th>Validación</th>
+                      <th>ACCION</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {result.rows.map((row, index) => (
-                      <tr key={index}>
-                        {columns.map((column) => (
-                          <td key={column.key}>{row[column.key] || '—'}</td>
-                        ))}
-                        <td><Badge status={row.__status} /></td>
-                      </tr>
-                    ))}
+                    {result.rows.map((row, index) => {
+                      const diskgroupName = row.NAME;
+                      const isLoading = loadingDisks.includes(diskgroupName);
+
+                      return (
+                        <tr key={index}>
+                          {columns.map((column) => (
+                            <td key={column.key}>{row[column.key] || '—'}</td>
+                          ))}
+                          <td>
+                            {showDiskAction && onShowDisks && diskgroupName ? (
+                              <button
+                                type="button"
+                                class="action-link"
+                                disabled={isLoading}
+                                title={`Ver discos del diskgroup ${diskgroupName}`}
+                                onClick={() => onShowDisks(diskgroupName)}
+                              >
+                                <span aria-hidden="true">🔍</span>
+                                {isLoading ? 'Consultando…' : 'Ver discos'}
+                              </button>
+                            ) : (
+                              <span class="action-empty">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

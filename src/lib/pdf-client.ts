@@ -61,7 +61,7 @@ export async function downloadReport({ diskgroup, results, queries }: PdfInput):
   y = 55;
 
   results.forEach((result, index) => {
-    const meta = queries.find((query) => query.id === result.id);
+    const meta = queries.find((query) => query.id === (result.sourceId ?? result.id));
     const keys = meta?.columns.map((column) => column.key)
       ?? Object.keys(result.rows[0] ?? {}).filter((key) => key !== '__status');
     const labels = meta?.columns.map((column) => column.label) ?? keys;

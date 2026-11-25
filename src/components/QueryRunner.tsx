@@ -23,7 +23,11 @@ export default function QueryRunner() {
   const [error, setError] = useState('');
   const [jobId, setJobId] = useState('');
   const [connectionLabel, setConnectionLabel] = useState('');
+  const [detailResults, setDetailResults] = useState<QueryResult[]>([]);
+  const [detailError, setDetailError] = useState('');
+  const [loadingDisks, setLoadingDisks] = useState<string[]>([]);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const detailSourcesRef = useRef<Set<EventSource>>(new Set());
 
   useEffect(() => {
     let active = true;
@@ -32,7 +36,7 @@ export default function QueryRunner() {
       .then((data: { queries: QueryMeta[] }) => {
         if (!active) return;
         setQueries(data.queries);
-        setSelected(data.queries.map((query) => query.id));
+        setSelected(data.queries.filter((query) => !query.hidden).map((query) => query.id));
       })
       .catch(() => {
         if (active) setError('No se pudo cargar el catálogo de consultas.');
@@ -42,7 +46,14 @@ export default function QueryRunner() {
     };
   }, []);
 
-  useEffect(() => () => eventSourceRef.current?.close(), []);
+  useEffect(
+    () => () => {
+      eventSourceRef.current?.close();
+      for (const source of detailSourcesRef.current) source.close();
+      detailSourcesRef.current.clear();
+    },
+    [],
+  );
 
   useEffect(() => {
     let active = true;
@@ -68,6 +79,8 @@ export default function QueryRunner() {
     eventSourceRef.current?.close();
     setOutput('');
     setResults([]);
+    setDetailResults([]);
+    setDetailError('');
     setError('');
     setJobId('');
     setStatus('running');
@@ -139,6 +152,68 @@ export default function QueryRunner() {
     }).catch(() => undefined);
   }
 
+  async function openDisks(rawName: string): Promise<void> {
+    const diskgroupName = rawName.trim().toUpperCase();
+    if (!isValidDiskgroup(diskgroupName) || loadingDisks.includes(diskgroupName)) return;
+
+    setDetailError('');
+    setLoadingDisks((previous) => [...previous, diskgroupName]);
+
+    try {
+      const response = await fetch('/api/run-disks', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-requested-with': 'XMLHttpRequest' },
+        body: JSON.stringify({ diskgroupName }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error ?? 'No se pudo consultar los discos.');
+      }
+
+      const source = new EventSource(`/api/stream?jobId=${encodeURIComponent(data.jobId as string)}`);
+      detailSourcesRef.current.add(source);
+
+      const finish = () => {
+        source.close();
+        detailSourcesRef.current.delete(source);
+        setLoadingDisks((previous) => previous.filter((name) => name !== diskgroupName));
+      };
+
+      source.addEventListener('snapshot', (event) => {
+        const snapshot = JSON.parse((event as MessageEvent<string>).data) as JobSnapshot;
+        setDetailResults((previous) => [
+          ...previous.filter((result) => !snapshot.results.some((item) => item.id === result.id)),
+          ...snapshot.results,
+        ]);
+        if (snapshot.error) setDetailError(snapshot.error);
+        if (snapshot.status !== 'running') finish();
+      });
+
+      source.addEventListener('result', (event) => {
+        const result = JSON.parse((event as MessageEvent<string>).data) as QueryResult;
+        setDetailResults((previous) => [...previous.filter((item) => item.id !== result.id), result]);
+      });
+
+      source.addEventListener('status', (event) => {
+        const payload = JSON.parse((event as MessageEvent<string>).data) as {
+          status: JobStatus;
+          error?: string;
+        };
+        if (payload.error) setDetailError(payload.error);
+        if (payload.status !== 'running') finish();
+      });
+
+      source.addEventListener('done', finish);
+      source.onerror = () => {
+        setDetailError('Se perdió la conexión durante la consulta de discos.');
+        finish();
+      };
+    } catch (cause) {
+      setDetailError(cause instanceof Error ? cause.message : String(cause));
+      setLoadingDisks((previous) => previous.filter((name) => name !== diskgroupName));
+    }
+  }
+
   function toggleQuery(id: string): void {
     setSelected((previous) =>
       previous.includes(id) ? previous.filter((value) => value !== id) : [...previous, id],
@@ -147,6 +222,7 @@ export default function QueryRunner() {
 
   const busy = status === 'running';
   const diskgroupValid = isValidDiskgroup(diskgroup.trim().toUpperCase());
+  const allResults = [...results, ...detailResults];
 
   return (
     <main class="layout">
@@ -184,7 +260,7 @@ export default function QueryRunner() {
         <div class="field">
           <span>Consultas maestras</span>
           <div class="query-list">
-            {queries.map((query) => (
+            {queries.filter((query) => !query.hidden).map((query) => (
               <label class="query-option" key={query.id}>
                 <input
                   type="checkbox"
@@ -212,8 +288,8 @@ export default function QueryRunner() {
           </button>
           <button
             class="button button--download"
-            onClick={() => void downloadReport({ diskgroup: diskgroup.trim().toUpperCase(), results, queries })}
-            disabled={results.length === 0}
+            onClick={() => void downloadReport({ diskgroup: diskgroup.trim().toUpperCase(), results: allResults, queries })}
+            disabled={allResults.length === 0}
           >
             Descargar PDF
           </button>
@@ -224,13 +300,27 @@ export default function QueryRunner() {
         <div class="panel-heading">
           <div>
             <h2>Terminal</h2>
-            <p>Salida en vivo de SQL*Plus.</p>
+            <p>Salida en vivo de SQLcl / SQL*Plus.</p>
           </div>
         </div>
         <TerminalPanel output={output} />
       </section>
 
-      <ReportTable results={results} queries={queries} />
+      <ReportTable
+        results={results}
+        queries={queries}
+        onShowDisks={(name) => void openDisks(name)}
+        loadingDisks={loadingDisks}
+      />
+
+      {(detailResults.length > 0 || loadingDisks.length > 0 || detailError) && (
+        <ReportTable
+          results={detailResults}
+          queries={queries}
+          title="Discos del diskgroup"
+          notice={detailError || (loadingDisks.length > 0 ? 'Consultando discos…' : undefined)}
+        />
+      )}
     </main>
   );
 }

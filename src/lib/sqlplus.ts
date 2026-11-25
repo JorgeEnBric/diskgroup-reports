@@ -71,7 +71,7 @@ function buildScript(job: JobInternal, spoolPaths: Record<string, string>, cfg: 
     if (!query) return;
     lines.push('PROMPT', `PROMPT [${index + 1}/${total}] ${query.title}`);
     lines.push(`SPOOL "${spoolPaths[id]}"`);
-    const sql = renderSql(query.sql.trim(), job.diskgroup);
+    const sql = renderSql(query.sql.trim(), job.diskgroup, job.params);
     // Algunas consultas maestras ya terminan en ';': no duplicar el terminador.
     lines.push(sql.endsWith(';') ? sql : `${sql};`);
     lines.push('SPOOL OFF');
@@ -87,13 +87,23 @@ function worstStatus(statuses: CheckStatus[]): CheckStatus {
   return 'OK';
 }
 
-function toResult(id: string, raw: string, durationMs: number, cfg: Config): QueryResult {
+function toResult(
+  id: string,
+  raw: string,
+  durationMs: number,
+  cfg: Config,
+  params?: Record<string, string>,
+): QueryResult {
   const query = getQuery(id)!;
+  const resultId = params?.diskgroupName ? `${id}:${params.diskgroupName}` : id;
+  const sourceId = resultId === id ? undefined : id;
+  const title = params?.diskgroupName ? `${query.title} ${params.diskgroupName}` : query.title;
+  const common = { id: resultId, sourceId, title };
+
   const errors = extractOracleErrors(raw);
   if (errors.length > 0) {
     return {
-      id,
-      title: query.title,
+      ...common,
       status: 'ERROR',
       rows: [],
       error: errors.join(' | '),
@@ -110,8 +120,7 @@ function toResult(id: string, raw: string, durationMs: number, cfg: Config): Que
       message: 'La consulta no devolvió filas. Revisa los permisos y el entorno de la base de datos.',
     };
     return {
-      id,
-      title: query.title,
+      ...common,
       status: empty.status,
       rows: [],
       error: empty.message,
@@ -120,8 +129,7 @@ function toResult(id: string, raw: string, durationMs: number, cfg: Config): Que
   }
 
   return {
-    id,
-    title: query.title,
+    ...common,
     status: worstStatus(rows.map((row) => row.__status)),
     rows,
     durationMs,
@@ -217,7 +225,7 @@ export async function executeJob(job: JobInternal): Promise<void> {
     for (const id of job.queryIds) {
       const started = Date.now();
       const raw = await readFile(spoolPaths[id], 'utf8').catch(() => '');
-      addResult(job, toResult(id, raw, Date.now() - started, cfg));
+      addResult(job, toResult(id, raw, Date.now() - started, cfg, job.params));
     }
 
     setStatus(job, 'done');

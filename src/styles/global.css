@@ -413,6 +413,39 @@ th {
   letter-spacing: 0.05em;
 }
 
+td {
+  white-space: normal;
+  word-break: break-word;
+  min-width: 70px;
+}
+
+.action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid #1e3a5f;
+  border-radius: 7px;
+  background: rgba(56, 189, 248, 0.08);
+  color: var(--accent);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.action-link:hover {
+  background: rgba(56, 189, 248, 0.16);
+}
+
+.action-link:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.action-empty {
+  color: #475569;
+}
+
 tbody tr:last-child td {
   border-bottom: none;
 }

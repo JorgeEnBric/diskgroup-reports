@@ -15,6 +15,8 @@ export interface QueryDefinition {
   evaluate: (row: Record<string, string>) => CheckStatus;
   /** Resultado cuando la consulta no devuelve filas. Por defecto WARN. */
   empty?: { status: CheckStatus; message: string };
+  /** Consultas bajo demanda no se muestran en la lista de selección. */
+  hidden?: boolean;
 }
 
 export interface QueryMeta {
@@ -22,6 +24,7 @@ export interface QueryMeta {
   title: string;
   description: string;
   columns: QueryColumn[];
+  hidden?: boolean;
 }
 
 export interface ResultRow extends Record<string, string> {
@@ -30,6 +33,8 @@ export interface ResultRow extends Record<string, string> {
 
 export interface QueryResult {
   id: string;
+  /** ID de la definición de consulta cuando `id` incluye parámetros (ej. dg_disks_by_group:DATA). */
+  sourceId?: string;
   title: string;
   status: CheckStatus;
   rows: ResultRow[];
@@ -43,6 +48,7 @@ export interface JobSnapshot {
   jobId: string;
   diskgroup: string;
   queryIds: string[];
+  params?: Record<string, string>;
   status: JobStatus;
   output: string;
   results: QueryResult[];

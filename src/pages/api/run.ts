@@ -25,7 +25,10 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: 'Selecciona al menos una consulta.' }, 400);
   }
 
-  const unknown = queryIds.filter((id) => !getQuery(id));
+  const unknown = queryIds.filter((id) => {
+    const query = getQuery(id);
+    return !query || query.hidden === true;
+  });
   if (unknown.length > 0) {
     return json({ error: `Consultas no permitidas: ${unknown.join(', ')}` }, 400);
   }

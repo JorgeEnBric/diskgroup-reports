@@ -59,6 +59,25 @@ El servidor compilado escucha en `127.0.0.1:4321` (configurable en `astro.config
 2. Marca las consultas maestras a ejecutar.
 3. Pulsa **Ejecutar consultas**. Verás la salida real de SQLcl/SQL\*Plus en el terminal.
 4. Revisa la tabla de resultados y pulsa **Descargar PDF**.
+5. En la tabla **1. Diskgroups ASM**, usa la columna **ACCION → 🔍 Ver discos** para consultar los discos de ese diskgroup. El resultado se añade como una sección nueva sin borrar las consultas maestras y también entra en el PDF.
+
+## Discos del diskgroup
+
+La consulta bajo demanda está en `src/lib/queries.ts` (`dg_disks_by_group`, oculta de la lista inicial):
+
+```sql
+SELECT group_number, disk_number, name, path, mount_status, header_status,
+       state, redundancy, os_mb, total_mb, free_mb, mount_date
+from v$asm_disk
+where GROUP_NUMBER IN (
+  SELECT GROUP_NUMBER FROM V$ASM_DISKGROUP WHERE NAME = '{{DISKGROUP_NAME}}'
+)
+ORDER BY name;
+```
+
+- El nombre se toma de la fila clickeada y se valida en servidor con `/^[A-Za-z0-9_]{1,30}$/`; el navegador no puede enviar SQL libre.
+- Incluye `set lines 180 pages 200` y sentencias `col ... format` para evitar desbordes en SQLcl.
+- `HEADER_STATUS <> 'MEMBER'` o `STATE <> 'NORMAL'` se marca como ERROR; sin filas se marca WARN.
 
 ## Ajustes desde la interfaz (engranaje ⚙)
 
@@ -99,6 +118,7 @@ Los `set lines 180 pages 200` y `col ... format` incluidos en las consultas se r
 | Archivo | Función |
 | --- | --- |
 | `src/pages/api/run.ts` | Valida la petición, crea el job y lanza SQLcl/SQL\*Plus en PTY. |
+| `src/pages/api/run-disks.ts` | Consulta bajo demanda “Discos del diskgroup” con parámetro validado. |
 | `src/pages/api/stream.ts` | SSE con `snapshot`, `output`, `result`, `status` y `done`. |
 | `src/pages/api/cancel.ts` | Cancela el job y mata la PTY. |
 | `src/pages/api/settings.ts` | GET/POST del panel ⚙: lee y guarda `.env` de forma atómica. |

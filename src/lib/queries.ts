@@ -78,6 +78,46 @@ SELECT group_number, disk_number, name, path, mount_status, header_status, state
     },
     empty: { status: 'ERROR', message: 'No se pudo obtener el nombre de la base de datos.' },
   },
+  {
+    id: 'dg_disks_by_group',
+    title: 'Discos del diskgroup',
+    description: 'Discos asignados al diskgroup seleccionado desde la tabla “Diskgroups ASM”.',
+    hidden: true,
+    sql: `set lines 180 pages 200
+col path format a40
+col name format a25
+col label format a15
+col mount_date format a20
+col header_status format a12
+col mount_status format a12
+col redundancy format a12
+col state format a10
+SELECT group_number, disk_number, name, path, mount_status, header_status, state, redundancy, os_mb, total_mb, free_mb, mount_date from v$asm_disk
+where GROUP_NUMBER IN (
+  SELECT GROUP_NUMBER FROM V$ASM_DISKGROUP WHERE NAME = '{{DISKGROUP_NAME}}'
+)
+ORDER BY name;`,
+    columns: [
+      { key: 'GROUP_NUMBER', label: 'Nº grupo', kind: 'number' },
+      { key: 'DISK_NUMBER', label: 'Nº disco', kind: 'number' },
+      { key: 'NAME', label: 'Disco' },
+      { key: 'PATH', label: 'Path' },
+      { key: 'MOUNT_STATUS', label: 'Mount' },
+      { key: 'HEADER_STATUS', label: 'Header' },
+      { key: 'STATE', label: 'Estado' },
+      { key: 'REDUNDANCY', label: 'Redundancia' },
+      { key: 'OS_MB', label: 'OS MB', kind: 'number' },
+      { key: 'TOTAL_MB', label: 'Total MB', kind: 'number' },
+      { key: 'FREE_MB', label: 'Libre MB', kind: 'number' },
+      { key: 'MOUNT_DATE', label: 'Mount date' },
+    ],
+    evaluate(row) {
+      if (row.HEADER_STATUS && row.HEADER_STATUS !== 'MEMBER') return 'ERROR';
+      if (row.STATE && row.STATE !== 'NORMAL') return 'ERROR';
+      return 'OK';
+    },
+    empty: { status: 'WARN', message: 'El diskgroup no tiene discos asociados.' },
+  },
 ];
 
 export function listQueries(): QueryDefinition[] {
@@ -85,7 +125,13 @@ export function listQueries(): QueryDefinition[] {
 }
 
 export function listQueryMeta(): QueryMeta[] {
-  return queries.map(({ id, title, description, columns }) => ({ id, title, description, columns }));
+  return queries.map(({ id, title, description, columns, hidden }) => ({
+    id,
+    title,
+    description,
+    columns,
+    hidden,
+  }));
 }
 
 export function getQuery(id: string): QueryDefinition | undefined {
@@ -96,6 +142,12 @@ export function isValidDiskgroup(value: string): boolean {
   return /^[A-Za-z0-9_]{1,30}$/.test(value);
 }
 
-export function renderSql(sql: string, diskgroup: string): string {
-  return sql.replaceAll('{{DISKGROUP}}', diskgroup);
+export function renderSql(
+  sql: string,
+  diskgroup: string,
+  params: Record<string, string> = {},
+): string {
+  return sql
+    .replaceAll('{{DISKGROUP}}', diskgroup)
+    .replaceAll('{{DISKGROUP_NAME}}', params.diskgroupName ?? '');
 }

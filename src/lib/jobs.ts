@@ -10,11 +10,17 @@ export interface JobInternal extends JobSnapshot {
 
 const jobs = new Map<string, JobInternal>();
 
-export function createJob(jobId: string, diskgroup: string, queryIds: string[]): JobInternal {
+export function createJob(
+  jobId: string,
+  diskgroup: string,
+  queryIds: string[],
+  params?: Record<string, string>,
+): JobInternal {
   const job: JobInternal = {
     jobId,
     diskgroup,
     queryIds,
+    params,
     status: 'running',
     output: '',
     rawOutput: '',
@@ -35,6 +41,7 @@ export function snapshot(job: JobInternal): JobSnapshot {
     jobId: job.jobId,
     diskgroup: job.diskgroup,
     queryIds: job.queryIds,
+    params: job.params,
     status: job.status,
     output: job.output,
     results: job.results,
