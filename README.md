@@ -55,7 +55,7 @@ El servidor compilado escucha en `127.0.0.1:4321` (configurable en `astro.config
 
 ## Uso
 
-1. Escribe el nombre del diskgroup (por defecto `DATA`).
+1. Escribe la etiqueta del informe (por defecto `DATA`); las consultas son globales.
 2. Marca las consultas maestras a ejecutar.
 3. Pulsa **Ejecutar consultas**. Verás la salida real de SQLcl/SQL\*Plus en el terminal.
 4. Revisa la tabla de resultados y pulsa **Descargar PDF**.
@@ -78,14 +78,21 @@ El botón ⚙ de la barra superior abre un panel que lee y escribe el archivo `.
 
 ## Consultas maestras
 
-Las consultas provisionales están en `src/lib/queries.ts`. Cada definición tiene:
+Están definidas en `src/lib/queries.ts` y se ejecutan **tal cual**, sin filtrar por la etiqueta del informe:
+
+1. `V$ASM_DISKGROUP`: estado, redundancia y espacio de todos los diskgroups.
+2. `V$ASM_DISK WHERE HEADER_STATUS = 'CANDIDATE'`: discos sin asignar; cada fila se marca `WARN` y “sin filas” se marca `OK`.
+3. `V$DATABASE`: nombre de la base de datos conectada.
+
+Cada definición tiene:
 
 - `id`, `title`, `description`
-- `sql`: usa `{{DISKGROUP}}` como marcador del diskgroup.
+- `sql`: se inserta tal cual en el script; si ya termina en `;`, el lanzador no añade otro. El marcador `{{DISKGROUP}}` sigue disponible si algún día necesitas filtrar, pero estas consultas no lo usan.
 - `columns`: columnas mostradas en la tabla y en el PDF.
 - `evaluate(row)`: devuelve `OK`, `WARN` o `ERROR` aplicando tus umbrales.
+- `empty`: estado y mensaje cuando la consulta no devuelve filas.
 
-Sustituye `sql` y `evaluate` por tus 3 consultas reales. El marcador se valida con `/^[A-Za-z0-9_]{1,30}$/` antes de sustituirse, por lo que no se puede inyectar SQL desde el navegador.
+Los `set lines 180 pages 200` y `col ... format` incluidos en las consultas se respetan; se ejecutan después de los ajustes de formato del lanzador.
 
 ## Arquitectura
 

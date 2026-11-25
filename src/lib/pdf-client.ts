@@ -35,13 +35,13 @@ export async function downloadReport({ diskgroup, results, queries }: PdfInput):
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(12);
   doc.setTextColor(148, 163, 184);
-  doc.text('Consultas ejecutadas mediante SQL*Plus en terminal real', 60, 160);
+  doc.text('Consultas ejecutadas mediante SQLcl / SQL*Plus en terminal real', 60, 160);
 
   doc.setTextColor(248, 250, 252);
   doc.setFontSize(13);
   let y = 230;
   const metaLines = [
-    ['Diskgroup', diskgroup],
+    ['Etiqueta', diskgroup],
     ['Fecha', generatedAt.toLocaleString()],
     ['Consultas', `${results.length}`],
     ['Estado global', worst(results)],
@@ -143,7 +143,7 @@ export async function downloadReport({ diskgroup, results, queries }: PdfInput):
     doc.setPage(page);
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 120);
-    doc.text(`Generado ${generatedAt.toLocaleString()} - Diskgroup ${diskgroup}`, 45, pageHeight - 18);
+    doc.text(`Generado ${generatedAt.toLocaleString()} - Etiqueta ${diskgroup}`, 45, pageHeight - 18);
     doc.text(`Pagina ${page} de ${totalPages}`, pageWidth - 45, pageHeight - 18, { align: 'right' });
   }
 

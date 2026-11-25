@@ -154,7 +154,7 @@ export default function QueryRunner() {
         <div class="panel-heading">
           <div>
             <h2>Consultas a ejecutar</h2>
-            <p>Selecciona el diskgroup y las consultas maestras.</p>
+            <p>Define la etiqueta del informe y selecciona las consultas maestras.</p>
           </div>
           <span class={`status status--${status}`}>{statusLabel[status]}</span>
         </div>
@@ -167,7 +167,7 @@ export default function QueryRunner() {
         )}
 
         <label class="field">
-          <span>Diskgroup</span>
+          <span>Etiqueta del informe</span>
           <input
             type="text"
             value={diskgroup}
@@ -177,7 +177,7 @@ export default function QueryRunner() {
             disabled={busy}
           />
           <small class={diskgroupValid ? 'hint' : 'hint hint--error'}>
-            Solo letras, números y guion bajo (máx. 30 caracteres).
+            Las consultas maestras son globales; esta etiqueta solo identifica el reporte. Solo letras, números y guion bajo (máx. 30).
           </small>
         </label>
 

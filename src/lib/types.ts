@@ -13,6 +13,8 @@ export interface QueryDefinition {
   sql: string;
   columns: QueryColumn[];
   evaluate: (row: Record<string, string>) => CheckStatus;
+  /** Resultado cuando la consulta no devuelve filas. Por defecto WARN. */
+  empty?: { status: CheckStatus; message: string };
 }
 
 export interface QueryMeta {

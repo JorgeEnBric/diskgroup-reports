@@ -62,7 +62,7 @@ function buildScript(job: JobInternal, spoolPaths: Record<string, string>, cfg: 
 
   lines.push(
     'PROMPT ============================================================',
-    `PROMPT Validando diskgroup ${job.diskgroup} (${total} consultas)`,
+    `PROMPT Generando reporte maestro (etiqueta: ${job.diskgroup}) (${total} consultas)`,
     'PROMPT ============================================================',
   );
 
@@ -71,7 +71,9 @@ function buildScript(job: JobInternal, spoolPaths: Record<string, string>, cfg: 
     if (!query) return;
     lines.push('PROMPT', `PROMPT [${index + 1}/${total}] ${query.title}`);
     lines.push(`SPOOL "${spoolPaths[id]}"`);
-    lines.push(`${renderSql(query.sql.trim(), job.diskgroup)};`);
+    const sql = renderSql(query.sql.trim(), job.diskgroup);
+    // Algunas consultas maestras ya terminan en ';': no duplicar el terminador.
+    lines.push(sql.endsWith(';') ? sql : `${sql};`);
     lines.push('SPOOL OFF');
   });
 
@@ -103,12 +105,16 @@ function toResult(id: string, raw: string, durationMs: number, cfg: Config): Que
   const rows = objects.map((row) => ({ ...row, __status: query.evaluate(row) }));
 
   if (rows.length === 0) {
+    const empty = query.empty ?? {
+      status: 'WARN' as const,
+      message: 'La consulta no devolvió filas. Revisa los permisos y el entorno de la base de datos.',
+    };
     return {
       id,
       title: query.title,
-      status: 'WARN',
+      status: empty.status,
       rows: [],
-      error: 'La consulta no devolvió filas. Revisa el nombre del diskgroup y los permisos.',
+      error: empty.message,
       durationMs,
     };
   }

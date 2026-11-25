@@ -1,125 +1,82 @@
 import type { QueryDefinition, QueryMeta } from './types';
 
-/**
- * CONSULTAS MAESTRAS PROVISIONALES.
- * Sustituye `sql` y `evaluate` por tus consultas reales cuando las tengas.
- * Usa {{DISKGROUP}} como marcador; se sustituye por un nombre validado.
- */
+/** Consultas maestras: se ejecutan tal cual, sin filtrar por la etiqueta del informe. */
 
 const queries: QueryDefinition[] = [
   {
     id: 'dg_summary',
-    title: '1. Resumen del diskgroup',
-    description: 'Estado, redundancia y espacio libre del diskgroup.',
-    sql: `SELECT d.NAME AS DISKGROUP,
-       d.STATE AS STATE,
-       d.TYPE AS REDUNDANCY,
-       TO_CHAR(ROUND(d.TOTAL_MB)) AS TOTAL_MB,
-       TO_CHAR(ROUND(d.FREE_MB)) AS FREE_MB,
-       TO_CHAR(ROUND(d.USABLE_FILE_MB)) AS USABLE_FILE_MB,
-       TO_CHAR(ROUND(100 * d.FREE_MB / NULLIF(d.TOTAL_MB, 0), 2)) AS FREE_PCT
-FROM V$ASM_DISKGROUP_STAT d
-WHERE d.NAME = '{{DISKGROUP}}'
-ORDER BY d.NAME`,
+    title: '1. Diskgroups ASM',
+    description: 'Estado, tipo y espacio de todos los diskgroups (V$ASM_DISKGROUP).',
+    sql: `set lines 180 pages 200
+col path format a25
+col name format a25
+col label format a15
+col path format a40
+select group_number,name,state,type,total_mb,free_mb
+from v$asm_diskgroup order by name;`,
     columns: [
-      { key: 'DISKGROUP', label: 'Diskgroup' },
+      { key: 'GROUP_NUMBER', label: 'Nº grupo', kind: 'number' },
+      { key: 'NAME', label: 'Diskgroup' },
       { key: 'STATE', label: 'Estado' },
-      { key: 'REDUNDANCY', label: 'Redundancia' },
+      { key: 'TYPE', label: 'Redundancia' },
       { key: 'TOTAL_MB', label: 'Total MB', kind: 'number' },
       { key: 'FREE_MB', label: 'Libre MB', kind: 'number' },
-      { key: 'USABLE_FILE_MB', label: 'Usable MB', kind: 'number' },
-      { key: 'FREE_PCT', label: 'Libre %', kind: 'percent' },
     ],
     evaluate(row) {
       if (row.STATE && row.STATE !== 'ONLINE') return 'ERROR';
-      const usable = Number(row.USABLE_FILE_MB);
-      if (Number.isFinite(usable) && usable < 0) return 'ERROR';
-      const freePct = Number(row.FREE_PCT);
-      if (Number.isFinite(freePct) && freePct < 10) return 'ERROR';
-      if (Number.isFinite(freePct) && freePct < 20) return 'WARN';
-      return 'OK';
-    },
-  },
-  {
-    id: 'dg_disks',
-    title: '2. Integridad de discos',
-    description: 'Discos miembros, failgroups, estados y errores de E/S.',
-    sql: `SELECT TO_CHAR(d.DISK_NUMBER) AS DISK_NUMBER,
-       d.NAME AS DISK_NAME,
-       d.FAILGROUP AS FAILGROUP,
-       d.PATH AS DISK_PATH,
-       d.STATE AS STATE,
-       d.HEADER_STATUS AS HEADER_STATUS,
-       d.MODE_STATUS AS MODE_STATUS,
-       TO_CHAR(ROUND(d.TOTAL_MB)) AS TOTAL_MB,
-       TO_CHAR(d.READ_ERRS) AS READ_ERRS,
-       TO_CHAR(d.WRITE_ERRS) AS WRITE_ERRS
-FROM V$ASM_DISK_STAT d
-WHERE d.GROUP_NUMBER IN (
-    SELECT GROUP_NUMBER FROM V$ASM_DISKGROUP_STAT WHERE NAME = '{{DISKGROUP}}'
-)
-ORDER BY d.FAILGROUP, d.DISK_NUMBER`,
-    columns: [
-      { key: 'DISK_NUMBER', label: 'Nº disco', kind: 'number' },
-      { key: 'DISK_NAME', label: 'Disco' },
-      { key: 'FAILGROUP', label: 'Failgroup' },
-      { key: 'DISK_PATH', label: 'Path' },
-      { key: 'STATE', label: 'Estado' },
-      { key: 'HEADER_STATUS', label: 'Header' },
-      { key: 'MODE_STATUS', label: 'Modo' },
-      { key: 'TOTAL_MB', label: 'Total MB', kind: 'number' },
-      { key: 'READ_ERRS', label: 'Err. lectura', kind: 'number' },
-      { key: 'WRITE_ERRS', label: 'Err. escritura', kind: 'number' },
-    ],
-    evaluate(row) {
-      if (row.HEADER_STATUS && row.HEADER_STATUS !== 'MEMBER') return 'ERROR';
-      if (row.STATE && row.STATE !== 'NORMAL') return 'ERROR';
-      if (row.MODE_STATUS && row.MODE_STATUS !== 'ONLINE') return 'ERROR';
-      if (Number(row.READ_ERRS) + Number(row.WRITE_ERRS) > 0) return 'WARN';
-      return 'OK';
-    },
-  },
-  {
-    id: 'dg_activity',
-    title: '3. Actividad y configuración',
-    description: 'Operaciones ASM en curso y atributos relevantes del diskgroup.',
-    sql: `SELECT 'OPERATION' AS KIND,
-       o.OPERATION AS NAME,
-       o.STATE AS STATE,
-       TO_CHAR(o.PCT_DONE) AS VALUE1,
-       TO_CHAR(o.EST_MINUTES) AS VALUE2,
-       TO_CHAR(o.EST_COMPLETE_TIME, 'YYYY-MM-DD HH24:MI:SS') AS VALUE3
-FROM V$ASM_OPERATION o
-WHERE o.GROUP_NUMBER IN (
-    SELECT GROUP_NUMBER FROM V$ASM_DISKGROUP_STAT WHERE NAME = '{{DISKGROUP}}'
-)
-UNION ALL
-SELECT 'ATTRIBUTE' AS KIND,
-       a.NAME AS NAME,
-       a.VALUE AS STATE,
-       NULL AS VALUE1,
-       NULL AS VALUE2,
-       NULL AS VALUE3
-FROM V$ASM_ATTRIBUTE a
-WHERE a.GROUP_NUMBER IN (
-    SELECT GROUP_NUMBER FROM V$ASM_DISKGROUP_STAT WHERE NAME = '{{DISKGROUP}}'
-)
-  AND a.NAME IN ('compatible.asm', 'compatible.rdbms', 'au_size', 'sector_size')
-ORDER BY KIND, NAME`,
-    columns: [
-      { key: 'KIND', label: 'Tipo' },
-      { key: 'NAME', label: 'Nombre' },
-      { key: 'STATE', label: 'Estado / Valor' },
-      { key: 'VALUE1', label: 'Pct / —', kind: 'number' },
-      { key: 'VALUE2', label: 'Min / —', kind: 'number' },
-      { key: 'VALUE3', label: 'ETA / —' },
-    ],
-    evaluate(row) {
-      if (row.KIND === 'OPERATION') {
-        return 'WARN'; // Hay una operación ASM activa (rebalanceo, etc.).
+      const total = Number(row.TOTAL_MB);
+      const free = Number(row.FREE_MB);
+      if (Number.isFinite(total) && total > 0 && Number.isFinite(free)) {
+        const freePct = (100 * free) / total;
+        if (freePct < 10) return 'ERROR';
+        if (freePct < 20) return 'WARN';
       }
       return 'OK';
     },
+    empty: { status: 'ERROR', message: 'No se encontraron diskgroups en V$ASM_DISKGROUP.' },
+  },
+  {
+    id: 'dg_disks',
+    title: '2. Discos candidatos',
+    description: 'Discos con HEADER_STATUS = CANDIDATE en V$ASM_DISK (sin asignar a un diskgroup).',
+    sql: `set lines 180 pages 200
+col path format a25
+col name format a25
+col label format a15
+col path format a40
+set lines 180 pages 200
+SELECT group_number, disk_number, name, path, mount_status, header_status, state, redundancy, os_mb, total_mb, free_mb, mount_date from v$asm_disk where header_status = 'CANDIDATE';`,
+    columns: [
+      { key: 'GROUP_NUMBER', label: 'Nº grupo', kind: 'number' },
+      { key: 'DISK_NUMBER', label: 'Nº disco', kind: 'number' },
+      { key: 'NAME', label: 'Disco' },
+      { key: 'PATH', label: 'Path' },
+      { key: 'MOUNT_STATUS', label: 'Mount' },
+      { key: 'HEADER_STATUS', label: 'Header' },
+      { key: 'STATE', label: 'Estado' },
+      { key: 'REDUNDANCY', label: 'Redundancia' },
+      { key: 'OS_MB', label: 'OS MB', kind: 'number' },
+      { key: 'TOTAL_MB', label: 'Total MB', kind: 'number' },
+      { key: 'FREE_MB', label: 'Libre MB', kind: 'number' },
+      { key: 'MOUNT_DATE', label: 'Mount date' },
+    ],
+    evaluate(row) {
+      if (row.HEADER_STATUS && row.HEADER_STATUS !== 'CANDIDATE') return 'ERROR';
+      // Todo disco devuelto por esta consulta está sin asignar: requiere revisión.
+      return 'WARN';
+    },
+    empty: { status: 'OK', message: 'No hay discos en estado CANDIDATE.' },
+  },
+  {
+    id: 'db_name',
+    title: '3. Nombre de la base de datos',
+    description: 'Nombre de la base de datos conectada (V$DATABASE).',
+    sql: `select name from v$database;`,
+    columns: [{ key: 'NAME', label: 'Base de datos' }],
+    evaluate() {
+      return 'OK';
+    },
+    empty: { status: 'ERROR', message: 'No se pudo obtener el nombre de la base de datos.' },
   },
 ];
 
