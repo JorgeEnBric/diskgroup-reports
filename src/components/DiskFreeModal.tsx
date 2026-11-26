@@ -221,7 +221,7 @@ export default function DiskFreeModal({ open, onClose, onResult }: Props) {
               </>
             ) : (
               <p class="notice notice--ok">
-                {result.error || `disco consultado [${normalized}], disco libre`}
+                {result.error || `Disco consultado ${normalized}, es un disco libre`}
               </p>
             )
           ) : null}

@@ -137,7 +137,7 @@ select 'DISCO YA EXISTE!!!' AS NOTA, name, path, mount_status from v$asm_disk wh
     evaluate(row) {
       return row.NOTA ? 'WARN' : 'OK';
     },
-    empty: { status: 'OK', message: 'disco consultado [], disco libre' },
+    empty: { status: 'OK', message: 'Disco consultado [], es un disco libre' },
   },
 ];
 
