@@ -15,6 +15,7 @@ const DOCUMENT_PART = 'word/document.xml';
 const CONTENT_WIDTH = 8640;
 
 const TABLE_PLACEHOLDERS = [
+  { pattern: /\[\s*Tabla\s*0\s*\.\s*Base\s+de\s+datos\s*\]/i, queryId: 'db_name' },
   { pattern: /\[\s*Tabla\s*1\s*\.\s*Diskgroups\s+ASM\s*\]/i, queryId: 'dg_summary' },
   { pattern: /\[\s*Tabla\s*2\s*\.\s*Discos\s+candidatos\s*\]/i, queryId: 'dg_disks' },
 ] as const;

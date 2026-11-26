@@ -69,14 +69,21 @@ SELECT group_number, disk_number, name, path, mount_status, header_status, state
   },
   {
     id: 'db_name',
-    title: '3. Nombre de la base de datos',
-    description: 'Nombre de la base de datos conectada (V$DATABASE).',
-    sql: `select name from v$database;`,
-    columns: [{ key: 'NAME', label: 'Base de datos' }],
+    title: '3. Información de la base de datos',
+    description: 'Nombre, host, fecha e IP de la base de datos conectada.',
+    sql: `SELECT d.name AS database_name,
+       SYS_CONTEXT('USERENV', 'SERVER_HOST') AS hostname,
+       TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS') AS "Date"
+FROM v$database d;`,
+    columns: [
+      { key: 'DATABASE_NAME', label: 'DATABASE_NAME' },
+      { key: 'HOSTNAME', label: 'HOSTNAME' },
+      { key: 'Date', label: 'Date' }
+    ],
     evaluate() {
       return 'OK';
     },
-    empty: { status: 'ERROR', message: 'No se pudo obtener el nombre de la base de datos.' },
+    empty: { status: 'ERROR', message: 'No se pudo obtener la información de la base de datos.' },
   },
   {
     id: 'dg_disks_by_group',
