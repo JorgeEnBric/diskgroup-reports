@@ -464,31 +464,63 @@ input[type="text"]:focus {
   color: #93c5fd;
 }
 
+.side-column {
+  display: grid;
+  gap: 20px;
+  align-content: start;
+  min-width: 0;
+}
+
+.side-column > * {
+  min-width: 0;
+}
+
+.terminal-panel {
+  padding: 18px;
+  background: linear-gradient(180deg, var(--panel) 0%, #0f172a 100%);
+}
+
+.terminal-panel .panel-heading,
+.ssh-panel .panel-heading {
+  margin-bottom: 14px;
+}
+
 .terminal-shell {
-  border: 1px solid #1f2a40;
-  border-radius: 10px;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
   overflow: hidden;
-  background: #0b1120;
+  background: #070c17;
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(148, 163, 184, 0.05);
 }
 
 .terminal-title {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   padding: 9px 12px;
-  border-bottom: 1px solid #1f2a40;
-  color: var(--muted);
-  font-size: 11px;
+  border-bottom: 1px solid #1e293b;
+  background: linear-gradient(180deg, #172033, #111827);
+  color: #94a3b8;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
 }
 
 .terminal-title > span:last-child {
-  margin-left: 8px;
+  margin-left: auto;
+  color: #cbd5e1;
+  letter-spacing: 0;
 }
 
 .terminal-dot {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
 }
 
 .terminal-dot.red { background: #ef4444; }
@@ -496,8 +528,34 @@ input[type="text"]:focus {
 .terminal-dot.green { background: #22c55e; }
 
 .terminal {
-  height: 430px;
-  padding: 8px;
+  min-width: 0;
+  max-width: 100%;
+  height: 380px;
+  padding: 10px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(56, 189, 248, 0.06), transparent 55%),
+    #070c17;
+}
+
+.terminal .xterm-viewport {
+  scrollbar-color: #334155 transparent;
+  scrollbar-width: thin;
+}
+
+.terminal .xterm-viewport::-webkit-scrollbar {
+  width: 8px;
+}
+
+.terminal .xterm-viewport::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: #334155;
+}
+
+.ssh-panel .ssh-picker {
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .report-header {

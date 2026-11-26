@@ -562,63 +562,6 @@ export default function QueryRunner() {
           </div>
         )}
 
-        <div class="field ssh-picker">
-          <span>Instancia SSH (instancias_ips.json)</span>
-          <div class="connection-search">
-            <span class="connection-search__icon" aria-hidden="true">🔎</span>
-            <input
-              type="text"
-              value={sshInstanceSearch}
-              onInput={(event) => setSshInstanceSearch((event.target as HTMLInputElement).value)}
-              placeholder="Buscar por base, ambiente, host o IP…"
-            />
-            <span class="connection-search__count">
-              {visibleSshInstances.length}/{sshInstances.length}
-            </span>
-          </div>
-          <div class="connection-row">
-            <div class="select-wrap">
-              <select
-                value={sshSelectedId}
-                onChange={(event) => setSshSelectedId((event.target as HTMLSelectElement).value)}
-              >
-                <option value="">Selecciona una instancia…</option>
-                {visibleSshInstances.map((instance) => (
-                  <option key={instance.id} value={instance.id} title={instance.label}>
-                    {instance.label}
-                  </option>
-                ))}
-                {visibleSshInstances.length === 0 && (
-                  <option value="" disabled>Sin coincidencias</option>
-                )}
-              </select>
-              <span class="select-chevron" aria-hidden="true">▾</span>
-            </div>
-            <button
-              type="button"
-              class="button button--ghost button--small"
-              onClick={() => void refreshSshInstances()}
-              disabled={sshInstancesLoading}
-              title="Recargar instancias desde instancias_ips.json"
-            >
-              ↻
-            </button>
-          </div>
-          <small class={sshInstancesError || sshLaunchError ? 'hint hint--error' : 'hint'}>
-            {sshInstancesError ||
-              sshLaunchMessage ||
-              'Selecciona la base, ambiente e IP concretos para abrir la consola SSH en una terminal nativa.'}
-          </small>
-          <button
-            type="button"
-            class="button button--ghost button--ssh"
-            onClick={() => void openSshConsole()}
-            disabled={!sshSelectedId || !selectedSshInstance || sshLaunching}
-          >
-            {sshLaunching ? 'Abriendo consola…' : 'Abrir consola SSH'}
-          </button>
-        </div>
-
         <label class="field">
           <span>Etiqueta del informe</span>
           <input
@@ -720,15 +663,83 @@ export default function QueryRunner() {
         </div>
       </section>
 
-      <section class="panel terminal-panel">
-        <div class="panel-heading">
-          <div>
-            <h2>Terminal</h2>
-            <p>Salida en vivo de SQLcl / SQL*Plus.</p>
+      <div class="side-column">
+        <section class="panel terminal-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Terminal</h2>
+              <p>Salida en vivo de SQLcl / SQL*Plus.</p>
+            </div>
           </div>
-        </div>
-        <TerminalPanel output={output} />
-      </section>
+          <TerminalPanel output={output} />
+        </section>
+
+        <section class="panel ssh-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Consola SSH</h2>
+              <p>Abre una instancia concreta en la terminal nativa del sistema.</p>
+            </div>
+          </div>
+
+          <div class="field ssh-picker">
+            <span>Instancia SSH (instancias_ips.json)</span>
+            <div class="connection-search">
+              <span class="connection-search__icon" aria-hidden="true">🔎</span>
+              <input
+                type="text"
+                value={sshInstanceSearch}
+                onInput={(event) => setSshInstanceSearch((event.target as HTMLInputElement).value)}
+                placeholder="Buscar por base, ambiente, host o IP…"
+              />
+              <span class="connection-search__count">
+                {visibleSshInstances.length}/{sshInstances.length}
+              </span>
+            </div>
+            <div class="connection-row">
+              <div class="select-wrap">
+                <select
+                  value={sshSelectedId}
+                  onChange={(event) => setSshSelectedId((event.target as HTMLSelectElement).value)}
+                >
+                  <option value="">Selecciona una instancia…</option>
+                  {visibleSshInstances.map((instance) => (
+                    <option key={instance.id} value={instance.id} title={instance.label}>
+                      {instance.label}
+                    </option>
+                  ))}
+                  {visibleSshInstances.length === 0 && (
+                    <option value="" disabled>Sin coincidencias</option>
+                  )}
+                </select>
+                <span class="select-chevron" aria-hidden="true">▾</span>
+              </div>
+              <button
+                type="button"
+                class="button button--ghost button--small"
+                onClick={() => void refreshSshInstances()}
+                disabled={sshInstancesLoading}
+                title="Recargar instancias desde instancias_ips.json"
+              >
+                ↻
+              </button>
+            </div>
+            <small class={sshInstancesError || sshLaunchError ? 'hint hint--error' : 'hint'}>
+              {sshInstancesError ||
+                sshLaunchMessage ||
+                'Selecciona la base, ambiente e IP concretos para abrir la consola SSH en una terminal nativa.'}
+            </small>
+            <button
+              type="button"
+              class="button button--ghost button--ssh"
+              onClick={() => void openSshConsole()}
+              disabled={!sshSelectedId || !selectedSshInstance || sshLaunching}
+            >
+              {sshLaunching ? 'Abriendo consola…' : 'Abrir consola SSH'}
+            </button>
+          </div>
+        </section>
+      </div>
 
       <ReportTable
         results={results}

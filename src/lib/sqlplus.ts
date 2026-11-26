@@ -9,6 +9,14 @@ import { extractOracleErrors, parseSpool, rowsToObjects } from './parse';
 import { getQuery, renderSql } from './queries';
 import type { CheckStatus, QueryResult } from './types';
 
+/**
+ * El separador `|~|` es necesario para parsear los SPOOL, pero SQLcl/SQL*Plus
+ * también lo ecoa en la PTY. En el terminal se muestra como espacios.
+ */
+function sanitizeTerminalOutput(text: string, delimiter: string): string {
+  return text ? text.split(delimiter).join('   ') : text;
+}
+
 /** Oculta los warnings de JLine/JVM en pantalla sin perder el log crudo del job. */
 function createOutputFilter() {
   let pending = '';
@@ -215,7 +223,9 @@ export async function executeJob(job: JobInternal): Promise<void> {
     job.kill = () => child.kill();
 
     const filter = createOutputFilter();
-    child.onData((data: string) => appendOutput(job, data, filter.push(data)));
+    child.onData((data: string) =>
+      appendOutput(job, data, sanitizeTerminalOutput(filter.push(data), cfg.delimiter)),
+    );
 
     timeout = setTimeout(() => {
       appendOutput(job, `\r\n[ERROR] Timeout de ${cfg.timeoutMs} ms alcanzado.\r\n`);
@@ -224,7 +234,7 @@ export async function executeJob(job: JobInternal): Promise<void> {
 
     await new Promise<void>((resolve) => {
       child.onExit(() => {
-        const remaining = filter.flush();
+        const remaining = sanitizeTerminalOutput(filter.flush(), cfg.delimiter);
         if (remaining) appendOutput(job, '', remaining);
         resolve();
       });
