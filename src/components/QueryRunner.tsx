@@ -6,7 +6,6 @@ import type { SshInstanceOption } from '../lib/ssh-shared';
 import type { JobSnapshot, JobStatus, QueryMeta, QueryResult } from '../lib/types';
 import DiskFreeModal from './DiskFreeModal';
 import ReportTable from './ReportTable';
-import SshConsoleModal from './SshConsoleModal';
 import TerminalPanel from './TerminalPanel';
 
 const statusLabel: Record<JobStatus | 'idle', string> = {
@@ -57,7 +56,9 @@ export default function QueryRunner() {
   const [sshSelectedId, setSshSelectedId] = useState('');
   const [sshInstancesLoading, setSshInstancesLoading] = useState(false);
   const [sshInstancesError, setSshInstancesError] = useState('');
-  const [sshConsoleOpen, setSshConsoleOpen] = useState(false);
+  const [sshLaunching, setSshLaunching] = useState(false);
+  const [sshLaunchMessage, setSshLaunchMessage] = useState('');
+  const [sshLaunchError, setSshLaunchError] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const detailSourcesRef = useRef<Map<string, EventSource>>(new Map());
   const detailTokensRef = useRef<Map<string, number>>(new Map());
@@ -137,6 +138,8 @@ export default function QueryRunner() {
   async function refreshSshInstances(): Promise<void> {
     setSshInstancesLoading(true);
     setSshInstancesError('');
+    setSshLaunchMessage('');
+    setSshLaunchError(false);
     try {
       const response = await fetch('/api/ssh/instances');
       const data = (await response.json()) as {
@@ -155,6 +158,31 @@ export default function QueryRunner() {
       setSshInstancesError(cause instanceof Error ? cause.message : String(cause));
     } finally {
       setSshInstancesLoading(false);
+    }
+  }
+
+  async function openSshConsole(): Promise<void> {
+    if (!sshSelectedId || sshLaunching) return;
+    setSshLaunching(true);
+    setSshLaunchError(false);
+    setSshLaunchMessage('Abriendo consola SSH en la terminal del sistema…');
+    try {
+      const response = await fetch('/api/ssh/launch', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-requested-with': 'XMLHttpRequest' },
+        body: JSON.stringify({ instanceId: sshSelectedId }),
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        target?: string;
+        error?: string;
+      };
+      if (!response.ok) throw new Error(data.error ?? 'No se pudo abrir la consola SSH.');
+      setSshLaunchMessage(`Consola SSH abierta: ${data.target ?? selectedSshInstance?.label ?? ''}`.trim());
+    } catch (cause) {
+      setSshLaunchError(true);
+      setSshLaunchMessage(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setSshLaunching(false);
     }
   }
 
@@ -574,16 +602,18 @@ export default function QueryRunner() {
               ↻
             </button>
           </div>
-          <small class={sshInstancesError ? 'hint hint--error' : 'hint'}>
-            {sshInstancesError || 'Selecciona la base, ambiente e IP concretos para abrir la consola SSH.'}
+          <small class={sshInstancesError || sshLaunchError ? 'hint hint--error' : 'hint'}>
+            {sshInstancesError ||
+              sshLaunchMessage ||
+              'Selecciona la base, ambiente e IP concretos para abrir la consola SSH en una terminal nativa.'}
           </small>
           <button
             type="button"
             class="button button--ghost button--ssh"
-            onClick={() => setSshConsoleOpen(true)}
-            disabled={!sshSelectedId || !selectedSshInstance}
+            onClick={() => void openSshConsole()}
+            disabled={!sshSelectedId || !selectedSshInstance || sshLaunching}
           >
-            Abrir consola SSH
+            {sshLaunching ? 'Abriendo consola…' : 'Abrir consola SSH'}
           </button>
         </div>
 
@@ -701,11 +731,6 @@ export default function QueryRunner() {
         onResult={upsertCheckResult}
       />
 
-      <SshConsoleModal
-        open={sshConsoleOpen}
-        instance={selectedSshInstance}
-        onClose={() => setSshConsoleOpen(false)}
-      />
     </main>
   );
 }

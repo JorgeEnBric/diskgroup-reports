@@ -162,8 +162,17 @@ DLLHYP · Desarrollo · srbogbddd06 (10.208.25.140)
 ```
 
 - El buscador filtra por base, ambiente, host o IP y muestra `coincidencias/total`. El botón **↻** recarga el JSON.
-- Al elegir una instancia y pulsar **Abrir consola SSH** se abre un modal con un terminal xterm interactivo sobre una PTY real (`node-pty`).
-- Al cerrar el modal se mata la sesión SSH. También se cierra al recargar o abandonar la página.
+- Al elegir una instancia y pulsar **Abrir consola SSH** se lanza una **ventana de terminal nativa del sistema** con el cliente `ssh` real. Ya no hay modal ni terminal embebida en el navegador.
+- La terminal se autodetecta en este orden:
+  - Windows: `wt.exe` (Windows Terminal) y, si no está, `cmd.exe /c start`.
+  - Linux: `gnome-terminal`, `konsole`, `xterm`, `x-terminal-emulator`, `xfce4-terminal`, `mate-terminal`.
+  - macOS: `Terminal.app` mediante `osascript`.
+- Para forzar otra terminal:
+  ```text
+  SSH_TERMINAL_BIN=
+  SSH_TERMINAL_ARGS=
+  ```
+  El comando final es `SSH_TERMINAL_BIN SSH_TERMINAL_ARGS SSH_BIN -tt -p PUERTO OPCIONES USUARIO@IP`, sin shell ni interpolación.
 - La IP **nunca** se toma del navegador: se envía solo un ID validado contra `instancias_ips.json`.
 - El usuario SSH se configura únicamente en `.env`:
   ```text
@@ -172,8 +181,9 @@ DLLHYP · Desarrollo · srbogbddd06 (10.208.25.140)
   SSH_BIN=ssh
   SSH_OPTS=-o StrictHostKeyChecking=accept-new -o ConnectTimeout=10
   ```
-  `SSH_USER` es obligatorio; los demás son opcionales. El panel ⚙ conserva estas variables al guardar `.env`, pero no las muestra ni las expone por API.
-- La autenticación es la del cliente `ssh` del servidor: llave/agente si está disponible y, si no, el prompt interactivo de password dentro del terminal. La password escrita viaja por `localhost` hasta la PTY; no se guarda, no se loguea y no se devuelve en `/api/settings`.
+  `SSH_USER` es obligatorio; los demás son opcionales. El panel ⚙ conserva todas estas variables al guardar `.env`, pero no las muestra ni las expone por API.
+- La autenticación es la del cliente `ssh` del sistema: llave/agente si está disponible y, si no, el prompt interactivo de password **dentro de la ventana nativa**. La password nunca pasa por la web, no se guarda, no se loguea y no se devuelve en `/api/settings`.
+- La ventana SSH queda independiente del navegador y del servidor: cerrar una no cierra la otra.
 
 ## Ajustes desde la interfaz (engranaje ⚙)
 

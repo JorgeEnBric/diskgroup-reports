@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { forbidden, isAllowedMutation, json } from '../../../lib/http';
 import { findSshInstance } from '../../../lib/ssh-instances';
-import { createSshSession } from '../../../lib/ssh-sessions';
+import { launchNativeSsh } from '../../../lib/ssh-launcher';
 
 export const POST: APIRoute = async ({ request }) => {
   if (!isAllowedMutation(request)) return forbidden();
@@ -24,12 +24,8 @@ export const POST: APIRoute = async ({ request }) => {
       return json({ error: 'La instancia SSH no existe en instancias_ips.json.' }, 404);
     }
 
-    const session = createSshSession(instance);
-    return json({
-      sessionId: session.sessionId,
-      instance,
-      status: session.status,
-    });
+    const result = await launchNativeSsh(instance);
+    return json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return json({ error: message }, 500);

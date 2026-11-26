@@ -30,6 +30,8 @@ const KEYS = [
   'SSH_PORT',
   'SSH_BIN',
   'SSH_OPTS',
+  'SSH_TERMINAL_BIN',
+  'SSH_TERMINAL_ARGS',
 ] as const;
 
 function read(name: string, fallback = ''): string {
@@ -253,6 +255,8 @@ export async function saveSettings(input: SettingsInput): Promise<PublicSettings
     SSH_PORT: read('SSH_PORT') || '22',
     SSH_BIN: read('SSH_BIN') || 'ssh',
     SSH_OPTS: read('SSH_OPTS'),
+    SSH_TERMINAL_BIN: read('SSH_TERMINAL_BIN'),
+    SSH_TERMINAL_ARGS: read('SSH_TERMINAL_ARGS'),
   };
 
   const content = [
