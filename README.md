@@ -62,6 +62,7 @@ El servidor compilado escucha en `127.0.0.1:4321` (configurable en `astro.config
 5. En la tabla **1. Diskgroups ASM**, usa la columna **ACCION → 🔍 Ver discos** para consultar los discos de ese diskgroup. El resultado se añade como una sección nueva sin borrar las consultas maestras y también entra en el PDF.
 6. Cada sección de discos tiene un botón **✕** para cerrarla. Puedes tener varias abiertas a la vez; al cerrar una desaparece del DOM y de futuros PDF.
 7. En **2. Discos candidatos**, usa **ACCION → 📋 Copiar función** para copiar al portapapeles la función `Valido_disco()` y la invocación con el **PATH completo** de esa fila, por ejemplo `Valido_disco /dev/oracleasm/DISCO_1`.
+8. Pulsa **Confirmar disco libre**, escribe un nombre de disco y consulta. Si existe se muestra `DISCO YA EXISTE!!!` con sus datos; si no, `disco consultado [NOMBRE], disco libre`. Cada resultado se añade como sección eliminable con **✕**; quitarla también la excluye del PDF.
 
 ## Discos del diskgroup
 
@@ -93,6 +94,22 @@ Valido_disco /dev/oracleasm/DISCO_1
 ```
 
 El path se copia tal cual; no se extrae el basename ni se añade `/dev/`. Si la fila no tiene PATH, el botón queda deshabilitado.
+
+## Confirmar disco libre
+
+El botón **Confirmar disco libre** abre un modal que ejecuta esta consulta oculta (`disk_free_check`):
+
+```sql
+select 'DISCO YA EXISTE!!!' AS NOTA, name, path, mount_status
+from v$asm_disk
+where name = '{{DISK_NAME}}';
+```
+
+- El nombre se valida en servidor con `/^[A-Za-z0-9_]{1,30}$/`; no se acepta SQL libre.
+- Si hay filas, el modal muestra **DISCO YA EXISTE!!!** y una tabla con `NOTA`, `NAME`, `PATH` y `MOUNT_STATUS`.
+- Si no hay filas, muestra `disco consultado [NOMBRE], disco libre`.
+- El resultado se añade como una sección más con botón **✕**. Al cerrar esa sección se elimina del DOM y de futuros PDF.
+- Cerrar el modal mientras consulta cancela el job y descarta el resultado.
 
 ## Ajustes desde la interfaz (engranaje ⚙)
 
@@ -134,6 +151,7 @@ Los `set lines 180 pages 200` y `col ... format` incluidos en las consultas se r
 | --- | --- |
 | `src/pages/api/run.ts` | Valida la petición, crea el job y lanza SQLcl/SQL\*Plus en PTY. |
 | `src/pages/api/run-disks.ts` | Consulta bajo demanda “Discos del diskgroup” con parámetro validado. |
+| `src/pages/api/check-disk-free.ts` | Consulta oculta “Confirmar disco libre” con nombre de disco validado. |
 | `src/pages/api/stream.ts` | SSE con `snapshot`, `output`, `result`, `status` y `done`. |
 | `src/pages/api/cancel.ts` | Cancela el job y mata la PTY. |
 | `src/pages/api/settings.ts` | GET/POST del panel ⚙: lee y guarda `.env` de forma atómica. |

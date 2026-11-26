@@ -95,9 +95,14 @@ function toResult(
   params?: Record<string, string>,
 ): QueryResult {
   const query = getQuery(id)!;
-  const resultId = params?.diskgroupName ? `${id}:${params.diskgroupName}` : id;
+  const paramName = params?.diskgroupName ?? params?.diskName;
+  const resultId = paramName ? `${id}:${paramName}` : id;
   const sourceId = resultId === id ? undefined : id;
-  const title = params?.diskgroupName ? `${query.title} ${params.diskgroupName}` : query.title;
+  const title = params?.diskName
+    ? `${query.title} [${params.diskName}]`
+    : params?.diskgroupName
+      ? `${query.title} ${params.diskgroupName}`
+      : query.title;
   const common = { id: resultId, sourceId, title };
 
   const errors = extractOracleErrors(raw);
@@ -119,11 +124,15 @@ function toResult(
       status: 'WARN' as const,
       message: 'La consulta no devolvió filas. Revisa los permisos y el entorno de la base de datos.',
     };
+    const message =
+      id === 'disk_free_check' && params?.diskName
+        ? `disco consultado [${params.diskName}], disco libre`
+        : empty.message;
     return {
       ...common,
       status: empty.status,
       rows: [],
-      error: empty.message,
+      error: message,
       durationMs,
     };
   }

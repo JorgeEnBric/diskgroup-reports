@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { downloadReport } from '../lib/pdf-client';
 import { isValidDiskgroup } from '../lib/queries';
 import type { JobSnapshot, JobStatus, QueryMeta, QueryResult } from '../lib/types';
+import DiskFreeModal from './DiskFreeModal';
 import ReportTable from './ReportTable';
 import TerminalPanel from './TerminalPanel';
 
@@ -33,6 +34,8 @@ export default function QueryRunner() {
   const [jobId, setJobId] = useState('');
   const [connectionLabel, setConnectionLabel] = useState('');
   const [diskPanels, setDiskPanels] = useState<DiskPanel[]>([]);
+  const [checkResults, setCheckResults] = useState<QueryResult[]>([]);
+  const [checkModalOpen, setCheckModalOpen] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const detailSourcesRef = useRef<Map<string, EventSource>>(new Map());
   const detailTokensRef = useRef<Map<string, number>>(new Map());
@@ -42,6 +45,17 @@ export default function QueryRunner() {
     setDiskPanels((previous) =>
       previous.map((panel) => (panel.key === key ? { ...panel, ...patch } : panel)),
     );
+  }
+
+  function upsertCheckResult(result: QueryResult): void {
+    setCheckResults((previous) => [
+      ...previous.filter((item) => item.id !== result.id),
+      result,
+    ]);
+  }
+
+  function closeCheckResult(id: string): void {
+    setCheckResults((previous) => previous.filter((item) => item.id !== id));
   }
 
   function invalidateDiskRequest(key: string): void {
@@ -104,6 +118,8 @@ export default function QueryRunner() {
     for (const key of detailTokensRef.current.keys()) invalidateDiskRequest(key);
     pendingOpensRef.current.clear();
     setDiskPanels([]);
+    setCheckResults([]);
+    setCheckModalOpen(false);
     setOutput('');
     setResults([]);
     setError('');
@@ -308,6 +324,7 @@ export default function QueryRunner() {
     ...diskPanels
       .map((panel) => panel.result)
       .filter((result): result is QueryResult => Boolean(result)),
+    ...checkResults,
   ];
 
   return (
@@ -372,6 +389,9 @@ export default function QueryRunner() {
           <button class="button button--ghost" onClick={cancel} disabled={!busy}>
             Cancelar
           </button>
+          <button class="button button--ghost" onClick={() => setCheckModalOpen(true)} disabled={busy}>
+            Confirmar disco libre
+          </button>
           <button
             class="button button--download"
             onClick={() => void downloadReport({ diskgroup: diskgroup.trim().toUpperCase(), results: allResults, queries })}
@@ -410,6 +430,23 @@ export default function QueryRunner() {
           closeLabel={`Cerrar discos del diskgroup ${panel.diskgroupName}`}
         />
       ))}
+
+      {checkResults.map((result) => (
+        <ReportTable
+          key={result.id}
+          results={[result]}
+          queries={queries}
+          title={result.title}
+          onClose={() => closeCheckResult(result.id)}
+          closeLabel={`Quitar ${result.title} del reporte`}
+        />
+      ))}
+
+      <DiskFreeModal
+        open={checkModalOpen}
+        onClose={() => setCheckModalOpen(false)}
+        onResult={upsertCheckResult}
+      />
     </main>
   );
 }

@@ -118,6 +118,27 @@ ORDER BY name;`,
     },
     empty: { status: 'WARN', message: 'El diskgroup no tiene discos asociados.' },
   },
+  {
+    id: 'disk_free_check',
+    title: 'Confirmar disco libre',
+    description: 'Comprueba si un nombre de disco ya está presente en V$ASM_DISK.',
+    hidden: true,
+    sql: `set lines 180 pages 200
+col nota format a20
+col name format a25
+col path format a40
+select 'DISCO YA EXISTE!!!' AS NOTA, name, path, mount_status from v$asm_disk where name = '{{DISK_NAME}}';`,
+    columns: [
+      { key: 'NOTA', label: 'Nota' },
+      { key: 'NAME', label: 'Disco' },
+      { key: 'PATH', label: 'Path' },
+      { key: 'MOUNT_STATUS', label: 'Mount' },
+    ],
+    evaluate(row) {
+      return row.NOTA ? 'WARN' : 'OK';
+    },
+    empty: { status: 'OK', message: 'disco consultado [], disco libre' },
+  },
 ];
 
 export function listQueries(): QueryDefinition[] {
@@ -142,6 +163,10 @@ export function isValidDiskgroup(value: string): boolean {
   return /^[A-Za-z0-9_]{1,30}$/.test(value);
 }
 
+export function isValidDiskName(value: string): boolean {
+  return /^[A-Za-z0-9_]{1,30}$/.test(value);
+}
+
 export function renderSql(
   sql: string,
   diskgroup: string,
@@ -149,5 +174,6 @@ export function renderSql(
 ): string {
   return sql
     .replaceAll('{{DISKGROUP}}', diskgroup)
-    .replaceAll('{{DISKGROUP_NAME}}', params.diskgroupName ?? '');
+    .replaceAll('{{DISKGROUP_NAME}}', params.diskgroupName ?? '')
+    .replaceAll('{{DISK_NAME}}', params.diskName ?? '');
 }
