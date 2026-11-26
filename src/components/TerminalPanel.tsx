@@ -89,7 +89,7 @@ export default function TerminalPanel({ output }: Props) {
         <span class="terminal-dot red" />
         <span class="terminal-dot yellow" />
         <span class="terminal-dot green" />
-        <span>SQLcl / SQL*Plus · PTY en vivo</span>
+        <span></span>
       </div>
       <div class="terminal" ref={hostRef} />
     </div>

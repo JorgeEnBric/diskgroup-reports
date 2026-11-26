@@ -33,7 +33,7 @@ interface SavedConnectionOption {
 }
 
 export default function QueryRunner() {
-  const [diskgroup, setDiskgroup] = useState('DATA');
+  const [diskgroup, setDiskgroup] = useState('CRQ_123456789');
   const [queries, setQueries] = useState<QueryMeta[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [status, setStatus] = useState<JobStatus | 'idle'>('idle');
@@ -496,21 +496,20 @@ export default function QueryRunner() {
       <section class="panel controls-panel">
         <div class="panel-heading">
           <div>
-            <h2>Consultas a ejecutar</h2>
-            <p>Define la etiqueta del informe y selecciona las consultas maestras.</p>
+            <h2>Conexiones</h2>
           </div>
           <span class={`status status--${status}`}>{statusLabel[status]}</span>
         </div>
 
         <div class="field connection-picker">
-          <span>Conexión guardada (.config)</span>
+          <span>Lista de conexiones (.config)</span>
           <div class="connection-search">
             <span class="connection-search__icon" aria-hidden="true">🔎</span>
             <input
               type="text"
               value={connectionSearch}
               onInput={(event) => setConnectionSearch((event.target as HTMLInputElement).value)}
-              placeholder="Buscar por nombre, usuario o conexión…"
+              placeholder="Nombre, usuario o conexión…"
               disabled={busy}
             />
             <span class="connection-search__count">
@@ -568,12 +567,11 @@ export default function QueryRunner() {
             type="text"
             value={diskgroup}
             onInput={(event) => setDiskgroup((event.target as HTMLInputElement).value.toUpperCase())}
-            placeholder="DATA"
+            placeholder="CRQ_XXXXXXX"
             maxLength={30}
             disabled={busy}
           />
           <small class={diskgroupValid ? 'hint' : 'hint hint--error'}>
-            Las consultas maestras son globales; esta etiqueta solo identifica el reporte. Solo letras, números y guion bajo (máx. 30).
           </small>
         </label>
 
@@ -668,7 +666,7 @@ export default function QueryRunner() {
           <div class="panel-heading">
             <div>
               <h2>Terminal</h2>
-              <p>Salida en vivo de SQLcl / SQL*Plus.</p>
+              <p>SQLcl / SQL*Plus.</p>
             </div>
           </div>
           <TerminalPanel output={output} />
@@ -678,7 +676,6 @@ export default function QueryRunner() {
           <div class="panel-heading">
             <div>
               <h2>Consola SSH</h2>
-              <p>Abre una instancia concreta en la terminal nativa del sistema.</p>
             </div>
           </div>
 
@@ -690,7 +687,7 @@ export default function QueryRunner() {
                 type="text"
                 value={sshInstanceSearch}
                 onInput={(event) => setSshInstanceSearch((event.target as HTMLInputElement).value)}
-                placeholder="Buscar por base, ambiente, host o IP…"
+                placeholder="Base, ambiente, host o IP…"
               />
               <span class="connection-search__count">
                 {visibleSshInstances.length}/{sshInstances.length}
