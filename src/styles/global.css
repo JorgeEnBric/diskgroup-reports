@@ -54,13 +54,20 @@ body {
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
+  padding: 5px;
+  border: 1px solid rgba(238, 0, 4, 0.55);
   border-radius: 12px;
-  background: linear-gradient(135deg, #0284c7, #4f46e5);
-  color: white;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .topbar h1 {
@@ -241,6 +248,35 @@ input[type="text"]:focus {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.actions--compact {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.actions--compact .button {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 7px 4px;
+  font-size: 10px;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.actions--compact .button-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.actions--compact .button-icon {
+  font-size: 14px;
+  line-height: 1;
 }
 
 .button {
@@ -638,6 +674,10 @@ tbody tr:nth-child(even) {
   .layout { grid-template-columns: 1fr; }
   .report-panel { grid-column: auto; }
   .topbar { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 620px) {
+  .actions--compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 .topbar-actions {

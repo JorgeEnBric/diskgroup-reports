@@ -10,16 +10,19 @@ import SettingsPanel from '../components/SettingsPanel';
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Validación de diskgroups ASM mediante consultas SQLcl o SQL*Plus." />
-    <title>Validador de Diskgroups</title>
+    <meta name="description" content="Diskgroup Center: validación de diskgroups ASM mediante consultas SQLcl o SQL*Plus." />
+    <link rel="icon" href="/oracle.svg" type="image/svg+xml" />
+    <title>Diskgroup Center</title>
   </head>
   <body>
     <div class="app">
       <header class="topbar">
         <div class="brand">
-          <span class="brand-mark">DG</span>
+          <span class="brand-mark" aria-hidden="true">
+            <img src="/oracle.svg" alt="" />
+          </span>
           <div>
-            <h1>Validador de Diskgroups</h1>
+            <h1>Diskgroup Center</h1>
             <p>Consultas ASM ejecutadas con SQLcl o SQL*Plus en una PTY real</p>
           </div>
         </div>
@@ -32,7 +35,7 @@ import SettingsPanel from '../components/SettingsPanel';
       <QueryRunner client:load />
 
       <footer class="footer">
-        <span>Herramienta local — el tráfico se limita a 127.0.0.1</span>
+        <span>Diskgroup Center — el tráfico se limita a 127.0.0.1</span>
         <span>Las credenciales nunca se envían al navegador</span>
       </footer>
     </div>

@@ -1,6 +1,8 @@
-# Validador de Diskgroups
+# Diskgroup Center
 
-Herramienta web local (sin login) para ejecutar 3 consultas maestras contra diskgroups ASM mediante **SQLcl (por defecto)** o **SQL\*Plus**, lanzado desde una **PTY (ConPTY en Windows)** y mostrado en vivo en un terminal xterm.js. Genera un reporte en PDF con portada, una sección por consulta y resumen, y también rellena el `Template.docx` incluido en la raíz.
+**Diskgroup Center** es una herramienta web local (sin login) para ejecutar 3 consultas maestras contra diskgroups ASM mediante **SQLcl (por defecto)** o **SQL\*Plus**, lanzado desde una **PTY (ConPTY en Windows)** y mostrado en vivo en un terminal xterm.js. Genera un reporte en PDF con portada, una sección por consulta y resumen, y también rellena el `Template.docx` incluido en la raíz.
+
+La interfaz usa el logotipo de Oracle como icono de la aplicación (`public/oracle.svg`) y también como favicon.
 
 ## Requisitos
 

@@ -655,29 +655,56 @@ export default function QueryRunner() {
         {error && <p class="alert">{error}</p>}
         {templateError && <p class="alert">{templateError}</p>}
 
-        <div class="actions">
-          <button class="button button--primary" onClick={start} disabled={busy || !diskgroupValid || selected.length === 0}>
-            {busy ? 'Ejecutando…' : 'Ejecutar consultas'}
+        <div class="actions actions--compact">
+          <button
+            class="button button--primary"
+            onClick={start}
+            disabled={busy || !diskgroupValid || selected.length === 0}
+            aria-label="Ejecutar consultas"
+            title="Ejecutar consultas"
+          >
+            <span class="button-icon" aria-hidden="true">▶</span>
+            <span class="button-label">{busy ? 'Ejecutando…' : 'Ejecutar'}</span>
           </button>
-          <button class="button button--ghost" onClick={cancel} disabled={!busy}>
-            Cancelar
+          <button
+            class="button button--ghost"
+            onClick={cancel}
+            disabled={!busy}
+            aria-label="Cancelar"
+            title="Cancelar"
+          >
+            <span class="button-icon" aria-hidden="true">■</span>
+            <span class="button-label">Cancelar</span>
           </button>
-          <button class="button button--ghost" onClick={() => setCheckModalOpen(true)} disabled={busy}>
-            Confirmar disco libre
+          <button
+            class="button button--ghost"
+            onClick={() => setCheckModalOpen(true)}
+            disabled={busy}
+            aria-label="Confirmar disco libre"
+            title="Confirmar disco libre"
+          >
+            <span class="button-icon" aria-hidden="true">✓</span>
+            <span class="button-label">Disco libre</span>
           </button>
           <button
             class="button button--download"
             onClick={() => void downloadReport({ diskgroup: diskgroup.trim().toUpperCase(), results: allResults, queries })}
             disabled={allResults.length === 0}
+            aria-label="Descargar PDF"
+            title="Descargar PDF"
           >
-            Descargar PDF
+            <span class="button-icon" aria-hidden="true">↓</span>
+            <span class="button-label">PDF</span>
           </button>
           <button
             class="button button--template"
             onClick={() => void buildTemplate()}
             disabled={busy || templateBusy || !diskgroupValid || allResults.length === 0}
+            aria-label="Construir template"
+            title="Construir template"
           >
-            {templateBusy ? 'Construyendo…' : 'Construir template'}
+            <span class="button-icon" aria-hidden="true">▤</span>
+            <span class="button-label">{templateBusy ? 'Construyendo…' : 'Template'}</span>
           </button>
         </div>
       </section>
