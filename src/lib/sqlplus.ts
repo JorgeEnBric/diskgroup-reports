@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import * as pty from 'node-pty';
 import { getConfig, validateConfig, type Config } from './env';
 import { addResult, appendOutput, disposeJob, setStatus, type JobInternal } from './jobs';
+import { getMasterPassword } from './master-password';
 import { extractOracleErrors, parseSpool, rowsToObjects } from './parse';
 import { getQuery, renderSql } from './queries';
 import type { CheckStatus, QueryResult } from './types';
@@ -147,6 +148,8 @@ function toResult(
 
 export async function executeJob(job: JobInternal): Promise<void> {
   const cfg = getConfig();
+  // La contraseña maestra vive solo en memoria del servidor; nunca se lee de .env.
+  cfg.dbPassword = await getMasterPassword();
   const problems = validateConfig(cfg);
   if (problems.length > 0) {
     setStatus(job, 'error', problems.join(' | '));
@@ -184,6 +187,7 @@ export async function executeJob(job: JobInternal): Promise<void> {
     // Un TNS_ADMIN vacío provoca el error TNSHelper.getTnsnamesDir en SQLcl.
     delete childEnv.TNS_ADMIN;
     delete childEnv.JAVA_TOOL_OPTIONS;
+    delete childEnv.DB_PASSWORD;
     childEnv.NLS_LANG = cfg.nlsLang;
     if (cfg.tnsAdmin) childEnv.TNS_ADMIN = cfg.tnsAdmin;
     if (cfg.javaOpts) childEnv.JAVA_TOOL_OPTIONS = cfg.javaOpts;

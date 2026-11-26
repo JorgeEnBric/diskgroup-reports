@@ -1,4 +1,4 @@
-# Genera el campo password desde el engranaje ⚙ → "Cifrar y guardar en .config".
+# El campo password se mantiene fijo; el servidor lo descifra al iniciar con CONFIG_ENCRYPTION_KEY.
 {
   "password": "<BASE64_NONCE_TAG_CIPHERTEXT>",
 SURASTAT/[PASS]@srorcbdd04:1537/DLLFINAN

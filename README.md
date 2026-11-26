@@ -21,15 +21,15 @@ Edita `.env` (valores de ejemplo para SQLcl):
 SQL_CLIENT=sqlcl
 SQLPLUS_BIN=C:/oracle/sqlcl/bin/sql.exe
 DB_USER=system
-DB_PASSWORD=<tu_password>
 DB_CONNECT=//host:1521/SERVICE
 TNS_ADMIN=
 NLS_LANG=AMERICAN_AMERICA.AL32UTF8
 JOB_TIMEOUT_MS=120000
 JAVA_OPTS=
+CONFIG_ENCRYPTION_KEY=<clave_base64_de_32_bytes>
 ```
 
-> El password solo existe en el proceso servidor. Nunca se envía al navegador ni se muestra en la PTY. No uses prefijo `PUBLIC_` en ninguna variable.
+> `DB_PASSWORD` **no se escribe en `.env`**. La contraseña se descifra de `.config`, queda solo en memoria del servidor y se pasa al cliente Oracle en la línea de conexión. Nunca se envía al navegador ni se muestra en la PTY. No uses prefijo `PUBLIC_` en ninguna variable.
 
 Para usar SQL\*Plus en lugar de SQLcl:
 
@@ -130,10 +130,11 @@ SURASTAT/[PASS]@cluster1b-scan.suranet.com:1537/ADMIN
 - El desplegable muestra el **servicio** (`DLLFINAN`, `PDNFNDMTO`, `ADMIN`). Si un servicio se repite se numeriza con `_2`, `_3`, etc.
 - `[PASS]` es un marcador: el servidor lo sustituye por la contraseña descifrada del campo `password`, una sola para todas las conexiones. El navegador nunca recibe la contraseña ni el marcador.
 - `password` es una clave reservada con cifrado AES-256-GCM y clave de 32 bytes en `CONFIG_ENCRYPTION_KEY` (base64 o hexadecimal). El valor guardado es base64 de `nonce(12) + tag(16) + ciphertext`.
-- La sección **Contraseña maestra (.config)** del engranaje ⚙ cifra la contraseña en el servidor, reemplaza esa línea en `.config` y muestra el ciphertext resultante. La contraseña en claro no se guarda en `.env` ni se devuelve al navegador.
-- Al elegir una conexión se descifra la contraseña en el servidor, se escriben `DB_USER`, `DB_CONNECT` y `DB_PASSWORD` en `.env` (con `TNS_ADMIN` vacío) y se actualiza la conexión activa.
+- El valor de `password` se mantiene fijo; la herramienta **no lo regenera**. El servidor lo descifra al iniciar con `CONFIG_ENCRYPTION_KEY` y conserva la contraseña solo en memoria.
+- Al elegir una conexión se escriben `DB_USER`, `DB_CONNECT` y `TNS_ADMIN` en `.env`, se actualiza la conexión activa y se recarga la contraseña maestra en memoria. **`DB_PASSWORD` no se escribe en `.env`.**
+- El desplegable incluye un buscador por nombre, usuario o cadena de conexión, con contador de coincidencias y botón **↻** para recargar `.config`.
 - Se permiten llaves, comas finales, líneas vacías y comentarios (`#`, `//`, `--`). Una línea malformada produce un error con su número.
-- El botón **↻** recarga la lista después de editar `.config`; también se recarga al volver a enfocar la ventana.
+- La lista también se recarga al volver a enfocar la ventana.
 - Si `.config` no existe, el desplegable queda vacío. Una conexión inexistente o un error de cifrado muestra un error sin modificar `.env`.
 
 ## Ajustes desde la interfaz (engranaje ⚙)
@@ -141,7 +142,7 @@ SURASTAT/[PASS]@cluster1b-scan.suranet.com:1537/ADMIN
 El botón ⚙ de la barra superior abre un panel que lee y escribe el archivo `.env` del proyecto:
 
 - **Cliente Oracle**: `SQLcl (sql.exe)` por defecto, o `SQL\*Plus (sqlplus.exe)`.
-- **Ruta del ejecutable**, **usuario**, **contraseña**, **timeout** y **NLS_LANG**.
+- **Ruta del ejecutable**, **usuario**, **timeout** y **NLS_LANG**. La contraseña no se edita aquí: se toma de `.config`.
 - **Conexión directa**: al activar el toggle se muestran **hostname**, **puerto** y **servicio/SID**; al guardar se construye `DB_CONNECT=//host:puerto/servicio`. Al desactivarlo vuelven a usarse `DB_CONNECT` y `TNS_ADMIN`.
 - **TNS_ADMIN vacío**: se elimina del entorno del proceso hijo. Así SQLcl no intenta usar una ruta vacía y usa la ubicación por defecto de Oracle.
 - **JAVA_OPTS** (solo para SQLcl): se inyecta como `JAVA_TOOL_OPTIONS`. Ejemplo para JVM recientes:
@@ -149,8 +150,7 @@ El botón ⚙ de la barra superior abre un panel que lee y escribe el archivo `.
   --enable-native-access=ALL-UNNAMED --enable-final-field-mutation=ALL-UNNAMED
   ```
   Déjalo vacío si tu Java no admite estos flags. Las líneas `WARNING:` y `Picked up JAVA_TOOL_OPTIONS:` se ocultan en el terminal, pero el log completo queda en memoria del job para depuración.
-- **Contraseña maestra (.config)**: escribe la contraseña única y pulsa **Cifrar y guardar en .config**. Se usa la clave `CONFIG_ENCRYPTION_KEY` del servidor; si `.config` no existe se muestra un error. El ciphertext se muestra para copiar; la contraseña en claro no se persiste ni se envía de vuelta.
-- La contraseña de conexión nunca se devuelve al navegador: se muestra el marcador `__KEEP__`. Déjalo así para conservar la contraseña actual o escríbela nueva para reemplazarla.
+- **Contraseña**: se muestra el marcador `__CONFIG__` cuando la maestra de `.config` está disponible. La contraseña descifrada nunca se devuelve al navegador ni se escribe en `.env`.
 - Los cambios se aplican a la siguiente ejecución sin reiniciar el servidor.
 
 ## Consultas maestras
@@ -178,9 +178,9 @@ Los `set lines 180 pages 200` y `col ... format` incluidos en las consultas se r
 | `src/pages/api/run.ts` | Valida la petición, crea el job y lanza SQLcl/SQL\*Plus en PTY. |
 | `src/pages/api/run-disks.ts` | Consulta bajo demanda “Discos del diskgroup” con parámetro validado. |
 | `src/pages/api/check-disk-free.ts` | Consulta oculta “Confirmar disco libre” con nombre de disco validado. |
-| `src/pages/api/connections.ts` | Lee `.config`, aplica una conexión y actualiza `.env`. |
-| `src/pages/api/encrypt-password.ts` | Cifra la contraseña maestra y la guarda en `.config`. |
-| `src/lib/connections.ts` | Parser de `.config` y cifrado/descifrado AES-256-GCM de la contraseña. |
+| `src/pages/api/connections.ts` | Lee `.config`, aplica una conexión y actualiza `.env` sin contraseña. |
+| `src/lib/connections.ts` | Parser de `.config` y descifrado AES-256-GCM de la contraseña. |
+| `src/lib/master-password.ts` | Contraseña maestra descifrada en memoria, nunca persistida. |
 | `src/pages/api/stream.ts` | SSE con `snapshot`, `output`, `result`, `status` y `done`. |
 | `src/pages/api/cancel.ts` | Cancela el job y mata la PTY. |
 | `src/pages/api/settings.ts` | GET/POST del panel ⚙: lee y guarda `.env` de forma atómica. |

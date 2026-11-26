@@ -3,12 +3,11 @@ import { rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   DEFAULT_SQL_CLIENT,
-  KEEP_PASSWORD,
   type PublicSettings,
   type SqlClient,
 } from './settings-shared';
 
-export { DEFAULT_SQL_CLIENT, KEEP_PASSWORD } from './settings-shared';
+export { CONFIG_PASSWORD, DEFAULT_SQL_CLIENT, KEEP_PASSWORD } from './settings-shared';
 export type { PublicSettings, SqlClient } from './settings-shared';
 
 export const ENV_PATH = join(process.cwd(), '.env');
@@ -17,7 +16,6 @@ const KEYS = [
   'SQL_CLIENT',
   'SQLPLUS_BIN',
   'DB_USER',
-  'DB_PASSWORD',
   'DB_CONNECT',
   'DB_HOST',
   'DB_PORT',
@@ -68,7 +66,8 @@ export function getConfig(): Config {
     sqlClient: readClient(sqlplusBin),
     sqlplusBin,
     dbUser: read('DB_USER'),
-    dbPassword: read('DB_PASSWORD'),
+    // La contraseña se descifra desde .config en el servidor; nunca se lee de .env.
+    dbPassword: '',
     dbConnect: read('DB_CONNECT'),
     dbHost: read('DB_HOST'),
     dbPort: read('DB_PORT'),
@@ -89,8 +88,8 @@ export function publicSettings(): PublicSettings {
     sqlClient: cfg.sqlClient,
     sqlplusBin: cfg.sqlplusBin,
     dbUser: cfg.dbUser,
-    dbPasswordSet: Boolean(cfg.dbPassword),
-    dbPassword: cfg.dbPassword ? KEEP_PASSWORD : '',
+    dbPasswordSet: false,
+    dbPassword: '',
     dbConnect: cfg.dbConnect,
     dbHost: cfg.dbHost,
     dbPort: cfg.dbPort,
@@ -149,8 +148,8 @@ export function normalizeSettings(input: SettingsInput): NormalizedSettings {
   const clientInput = str(input.sqlClient ?? current.sqlClient, 20).toLowerCase();
   const sqlClient: SqlClient = clientInput === 'sqlplus' ? 'sqlplus' : DEFAULT_SQL_CLIENT;
 
-  const passwordInput = str(input.dbPassword, 200);
-  const dbPassword = passwordInput === KEEP_PASSWORD ? current.dbPassword : passwordInput;
+  // Se ignora cualquier contraseña enviada desde la UI: se usa la maestra de .config.
+  const dbPassword = '';
 
   const dbHost = directConnection ? str(input.host, 200) : current.dbHost;
   const dbPort = directConnection ? str(input.port, 10) : current.dbPort;
@@ -200,7 +199,6 @@ export async function saveSettings(input: SettingsInput): Promise<PublicSettings
     SQL_CLIENT: settings.sqlClient,
     SQLPLUS_BIN: settings.sqlplusBin,
     DB_USER: settings.dbUser,
-    DB_PASSWORD: settings.dbPassword,
     DB_CONNECT: settings.dbConnect,
     DB_HOST: settings.dbHost,
     DB_PORT: settings.dbPort,
@@ -224,6 +222,7 @@ export async function saveSettings(input: SettingsInput): Promise<PublicSettings
   await rename(temporary, ENV_PATH);
 
   for (const key of KEYS) process.env[key] = values[key];
+  delete process.env.DB_PASSWORD;
   return publicSettings();
 }
 
@@ -233,7 +232,9 @@ export function validateConfig(cfg: Config = getConfig()): string[] {
 
   if (!cfg.sqlplusBin) problems.push(`Falta la ruta de ${binary} en los ajustes`);
   if (!cfg.dbUser) problems.push('Falta el usuario de la base de datos');
-  if (!cfg.dbPassword) problems.push('Falta la contraseña de la base de datos');
+  if (!cfg.dbPassword) {
+    problems.push('Falta la contraseña maestra cifrada en .config o CONFIG_ENCRYPTION_KEY');
+  }
   if (!cfg.dbConnect) {
     problems.push(
       cfg.directConnection

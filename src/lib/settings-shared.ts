@@ -1,5 +1,6 @@
 /** Constantes y tipos compartidos entre el servidor y la isla de ajustes. */
 export const KEEP_PASSWORD = '__KEEP__';
+export const CONFIG_PASSWORD = '__CONFIG__';
 export const DEFAULT_SQL_CLIENT = 'sqlcl';
 
 export type SqlClient = 'sqlcl' | 'sqlplus';

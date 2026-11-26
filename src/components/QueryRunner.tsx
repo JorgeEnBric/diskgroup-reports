@@ -44,6 +44,7 @@ export default function QueryRunner() {
   const [checkModalOpen, setCheckModalOpen] = useState(false);
   const [savedConnections, setSavedConnections] = useState<SavedConnectionOption[]>([]);
   const [selectedConnection, setSelectedConnection] = useState('');
+  const [connectionSearch, setConnectionSearch] = useState('');
   const [connectionMessage, setConnectionMessage] = useState('');
   const [connectionError, setConnectionError] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -158,6 +159,7 @@ export default function QueryRunner() {
       if (!response.ok) throw new Error(data.error ?? 'No se pudo aplicar la conexión.');
 
       setSelectedConnection(name);
+      setConnectionSearch('');
       setConnectionMessage(`Conexión ${name} aplicada`);
       window.dispatchEvent(new Event('dg:settings-changed'));
     } catch (cause) {
@@ -386,6 +388,14 @@ export default function QueryRunner() {
       .filter((result): result is QueryResult => Boolean(result)),
     ...checkResults,
   ];
+  const searchText = connectionSearch.trim().toLowerCase();
+  const visibleConnections = searchText
+    ? savedConnections.filter((connection) =>
+        `${connection.name} ${connection.user} ${connection.connect}`
+          .toLowerCase()
+          .includes(searchText),
+      )
+    : savedConnections;
 
   return (
     <main class="layout">
@@ -444,23 +454,42 @@ export default function QueryRunner() {
 
         <div class="field connection-picker">
           <span>Conexión guardada (.config)</span>
-          <div class="connection-row">
-            <select
-              value={selectedConnection}
-              onChange={(event) => void applyConnection((event.target as HTMLSelectElement).value)}
+          <div class="connection-search">
+            <span class="connection-search__icon" aria-hidden="true">🔎</span>
+            <input
+              type="text"
+              value={connectionSearch}
+              onInput={(event) => setConnectionSearch((event.target as HTMLInputElement).value)}
+              placeholder="Buscar por nombre, usuario o conexión…"
               disabled={busy}
-            >
-              <option value="">Selecciona una conexión…</option>
-              {savedConnections.map((connection) => (
-                <option
-                  key={connection.name}
-                  value={connection.name}
-                  title={`${connection.user}@${connection.connect}`}
-                >
-                  {connection.name}
-                </option>
-              ))}
-            </select>
+            />
+            <span class="connection-search__count">
+              {visibleConnections.length}/{savedConnections.length}
+            </span>
+          </div>
+          <div class="connection-row">
+            <div class="select-wrap">
+              <select
+                value={selectedConnection}
+                onChange={(event) => void applyConnection((event.target as HTMLSelectElement).value)}
+                disabled={busy}
+              >
+                <option value="">Selecciona una conexión…</option>
+                {visibleConnections.map((connection) => (
+                  <option
+                    key={connection.name}
+                    value={connection.name}
+                    title={`${connection.user}@${connection.connect}`}
+                  >
+                    {connection.name}
+                  </option>
+                ))}
+                {visibleConnections.length === 0 && (
+                  <option value="" disabled>Sin coincidencias</option>
+                )}
+              </select>
+              <span class="select-chevron" aria-hidden="true">▾</span>
+            </div>
             <button
               type="button"
               class="button button--ghost button--small"

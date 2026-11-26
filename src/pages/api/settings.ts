@@ -1,13 +1,18 @@
 import type { APIRoute } from 'astro';
-import { connectionLabel, ENV_PATH, getConfig, publicSettings, saveSettings } from '../../lib/env';
+import { CONFIG_PASSWORD, connectionLabel, ENV_PATH, publicSettings, saveSettings } from '../../lib/env';
+import { getMasterPassword } from '../../lib/master-password';
 import { forbidden, isAllowedMutation, json } from '../../lib/http';
 
-export const GET: APIRoute = () =>
-  json({
+export const GET: APIRoute = async () => {
+  const masterReady = Boolean(await getMasterPassword());
+  return json({
     ...publicSettings(),
-    connectionLabel: connectionLabel(getConfig()),
+    dbPasswordSet: masterReady,
+    dbPassword: masterReady ? CONFIG_PASSWORD : '',
+    connectionLabel: connectionLabel(),
     envPath: ENV_PATH,
   });
+};
 
 export const POST: APIRoute = async ({ request }) => {
   if (!isAllowedMutation(request)) return forbidden();
@@ -21,9 +26,12 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const settings = await saveSettings(body);
+    const masterReady = Boolean(await getMasterPassword());
     return json({
       ...settings,
-      connectionLabel: connectionLabel(getConfig()),
+      dbPasswordSet: masterReady,
+      dbPassword: masterReady ? CONFIG_PASSWORD : '',
+      connectionLabel: connectionLabel(),
       envPath: ENV_PATH,
       saved: true,
     });

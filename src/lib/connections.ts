@@ -1,5 +1,5 @@
-import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
-import { readFile, rename, writeFile } from 'node:fs/promises';
+import { createDecipheriv } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 export const CONFIG_PATH = join(process.cwd(), '.config');
@@ -30,18 +30,6 @@ function keyFrom(value: string): Buffer {
 }
 
 /** AES-256-GCM: base64 = nonce(12) + tag(16) + ciphertext. */
-export function encryptPassword(plain: string): string {
-  const keyText = (process.env.CONFIG_ENCRYPTION_KEY ?? '').trim();
-  if (!keyText) {
-    throw new Error('Falta CONFIG_ENCRYPTION_KEY para cifrar la contraseña de .config.');
-  }
-
-  const nonce = randomBytes(12);
-  const cipher = createCipheriv('aes-256-gcm', keyFrom(keyText), nonce);
-  const encrypted = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
-  return Buffer.concat([nonce, cipher.getAuthTag(), encrypted]).toString('base64');
-}
-
 export function decryptPassword(encrypted: string): string {
   if (!encrypted) return '';
 
@@ -111,42 +99,4 @@ export async function loadConfigFile(): Promise<ConfigFile> {
   });
 
   return { connections, encryptedPassword };
-}
-
-/**
- * Sustituye (o inserta) la línea `password` de .config sin tocar las conexiones.
- * La contraseña en claro nunca se escribe en este archivo.
- */
-export async function saveEncryptedPassword(encrypted: string): Promise<void> {
-  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(encrypted)) {
-    throw new Error('El valor cifrado no tiene un formato base64 válido.');
-  }
-
-  let text: string;
-  try {
-    text = await readFile(CONFIG_PATH, 'utf8');
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      throw new Error('No existe .config. Copia .config.example antes de cifrar la contraseña.');
-    }
-    throw error;
-  }
-
-  const newline = text.includes('\r\n') ? '\r\n' : '\n';
-  const line = `  "password": "${encrypted}",`;
-  let updated: string;
-
-  if (PASSWORD_LINE.test(text)) {
-    updated = text.replace(PASSWORD_LINE, () => line);
-  } else {
-    const lines = text.split(/\r?\n/);
-    const opening = lines.findIndex((item) => item.trim() === '{');
-    if (opening >= 0) lines.splice(opening + 1, 0, line);
-    else lines.unshift(line);
-    updated = lines.join(newline);
-  }
-
-  const temporary = `${CONFIG_PATH}.${process.pid}.tmp`;
-  await writeFile(temporary, updated, { mode: 0o600 });
-  await rename(temporary, CONFIG_PATH);
 }

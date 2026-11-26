@@ -1,6 +1,13 @@
 import type { APIRoute } from 'astro';
-import { CONFIG_PATH, decryptPassword, loadConfigFile } from '../../lib/connections';
-import { connectionLabel, getConfig, KEEP_PASSWORD, publicSettings, saveSettings } from '../../lib/env';
+import { CONFIG_PATH, loadConfigFile } from '../../lib/connections';
+import {
+  CONFIG_PASSWORD,
+  connectionLabel,
+  getConfig,
+  publicSettings,
+  saveSettings,
+} from '../../lib/env';
+import { refreshMasterPassword } from '../../lib/master-password';
 import { forbidden, isAllowedMutation, json } from '../../lib/http';
 
 function message(error: unknown): string {
@@ -35,20 +42,18 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    const { connections, encryptedPassword } = await loadConfigFile();
+    const { connections } = await loadConfigFile();
     const found = connections.find((connection) => connection.name === name);
     if (!found) {
       return json({ error: `La conexión ${name} no existe en .config.` }, 404);
     }
 
     const current = publicSettings();
-    const password = encryptedPassword ? decryptPassword(encryptedPassword) : KEEP_PASSWORD;
-
     await saveSettings({
       sqlClient: current.sqlClient,
       sqlplusBin: current.sqlplusBin,
       dbUser: found.user,
-      dbPassword: password,
+      dbPassword: CONFIG_PASSWORD,
       dbConnect: found.connect,
       tnsAdmin: found.tnsAdmin,
       directConnection: false,
@@ -56,6 +61,9 @@ export const POST: APIRoute = async ({ request }) => {
       timeoutMs: current.timeoutMs,
       javaOpts: current.javaOpts,
     });
+
+    // La contraseña descifrada queda solo en memoria del servidor.
+    await refreshMasterPassword();
 
     return json({ name, saved: true, connectionLabel: connectionLabel(getConfig()) });
   } catch (error) {
