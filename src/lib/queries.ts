@@ -69,7 +69,7 @@ SELECT group_number, disk_number, name, path, mount_status, header_status, state
   },
   {
     id: 'db_name',
-    title: '3. Información de la base de datos',
+    title: '3. Informacion de la base de datos',
     description: 'Nombre, host, fecha e IP de la base de datos conectada.',
     sql: `SELECT d.name AS database_name,
        SYS_CONTEXT('USERENV', 'SERVER_HOST') AS hostname,

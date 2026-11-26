@@ -79,7 +79,7 @@ function buildScript(job: JobInternal, spoolPaths: Record<string, string>, cfg: 
     lines.push('SPOOL OFF');
   });
 
-  lines.push('PROMPT', 'PROMPT ============================================================', 'PROMPT Fin de la validación', 'EXIT');
+  lines.push('PROMPT', 'PROMPT ============================================================', 'PROMPT Fin de la validacion', 'EXIT');
   return `${lines.join('\n')}\n`;
 }
 
