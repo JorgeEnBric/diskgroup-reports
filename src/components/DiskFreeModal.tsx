@@ -195,7 +195,9 @@ export default function DiskFreeModal({ open, onClose, onResult }: Props) {
           {result ? (
             exists ? (
               <>
-                <p class="notice">DISCO YA EXISTE!!!</p>
+                <p class="notice notice--error">DISCO YA EXISTE!!!</p>
+                <br />
+                <br />
                 <div class="table-wrap">
                   <table>
                     <thead>
@@ -218,13 +220,13 @@ export default function DiskFreeModal({ open, onClose, onResult }: Props) {
                 </div>
               </>
             ) : (
-              <p class="notice">
+              <p class="notice notice--ok">
                 {result.error || `disco consultado [${normalized}], disco libre`}
               </p>
             )
           ) : null}
 
-          {loading && <p class="notice">Consultando…</p>}
+          {loading && <p class="notice notice--info">Consultando…</p>}
         </div>
 
         <div class="modal-footer">
