@@ -26,6 +26,10 @@ const KEYS = [
   'JOB_TIMEOUT_MS',
   'JAVA_OPTS',
   'CONFIG_ENCRYPTION_KEY',
+  'SSH_USER',
+  'SSH_PORT',
+  'SSH_BIN',
+  'SSH_OPTS',
 ] as const;
 
 function read(name: string, fallback = ''): string {
@@ -79,6 +83,42 @@ export function getConfig(): Config {
     javaOpts: read('JAVA_OPTS'),
     delimiter: '|~|',
   };
+}
+
+export interface SshConfig {
+  user: string;
+  port: string;
+  bin: string;
+  opts: string[];
+}
+
+/** Configuración SSH: se lee del entorno del servidor y nunca se expone en /api/settings. */
+export function getSshConfig(): SshConfig {
+  const rawPort = read('SSH_PORT') || '22';
+  const port =
+    /^\d{1,5}$/.test(rawPort) && Number(rawPort) > 0 && Number(rawPort) <= 65535
+      ? rawPort
+      : '22';
+
+  return {
+    user: read('SSH_USER'),
+    port,
+    bin: read('SSH_BIN') || 'ssh',
+    opts: read('SSH_OPTS')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 32),
+  };
+}
+
+export function validateSshConfig(cfg: SshConfig = getSshConfig()): string[] {
+  const problems: string[] = [];
+  if (!cfg.user) {
+    problems.push('Falta SSH_USER en .env');
+  } else if (!/^[A-Za-z_][A-Za-z0-9_.-]{0,63}$/.test(cfg.user)) {
+    problems.push('SSH_USER contiene caracteres no válidos');
+  }
+  return problems;
 }
 
 /** Nunca devuelve el password en claro; usa un marcador para conservarlo. */
@@ -209,6 +249,10 @@ export async function saveSettings(input: SettingsInput): Promise<PublicSettings
     JOB_TIMEOUT_MS: String(settings.timeoutMs),
     JAVA_OPTS: settings.javaOpts,
     CONFIG_ENCRYPTION_KEY: read('CONFIG_ENCRYPTION_KEY'),
+    SSH_USER: read('SSH_USER'),
+    SSH_PORT: read('SSH_PORT') || '22',
+    SSH_BIN: read('SSH_BIN') || 'ssh',
+    SSH_OPTS: read('SSH_OPTS'),
   };
 
   const content = [

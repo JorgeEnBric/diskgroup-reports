@@ -1,0 +1,1553 @@
+{
+  "instancias": {
+    "DLLPDN": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLAGENW": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLADM": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLAST": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLBANCA": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLBATCH": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLCONGLOME": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLIPSA": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLLIS": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLMPREP": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLOLFHA": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLOLNF": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLPORTALES": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLSBK": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLSIC": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLSINFO": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLSALUDW": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLSOAT": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLTUTEL": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srbogbddd06",
+        "ip": "10.208.25.206"
+      }
+    ],
+    "DLLGWMGR": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srcsbdd01",
+        "ip": "10.208.25.207"
+      }
+    ],
+    "DLLGWS": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srcsbdd01",
+        "ip": "10.208.25.207"
+      }
+    ],
+    "DLLGWSTAGE": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srcsbdd02",
+        "ip": "10.208.25.208"
+      }
+    ],
+    "DLLCONTIG": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srorcbdd01",
+        "ip": "10.208.24.120"
+      }
+    ],
+    "DLLFORMS": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srorcbdd01",
+        "ip": "10.208.24.120"
+      }
+    ],
+    "DLLPOS": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srorcbdd01",
+        "ip": "10.208.24.120"
+      }
+    ],
+    "DLLSTATP": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srorcbdd01",
+        "ip": "10.208.24.120"
+      }
+    ],
+    "DLLHYP": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srorcbdd03",
+        "ip": "10.208.25.21"
+      },
+      {
+        "ambiente": "Desarrollo",
+        "host": "srp8bdd01",
+        "ip": "10.208.25.140"
+      }
+    ],
+    "DLLFINAN": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srorcbdd04",
+        "ip": "10.203.10.190"
+      }
+    ],
+    "DLLADMIN": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srp8bdd01",
+        "ip": "10.208.25.140"
+      }
+    ],
+    "DLLP8": [
+      {
+        "ambiente": "Desarrollo",
+        "host": "srp8bdd01",
+        "ip": "10.208.25.140"
+      }
+    ],
+    "LABCONGLOME": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "epsorcbdl02",
+        "ip": "10.201.121.23"
+      }
+    ],
+    "LABIPSA": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "epsorcbdl02",
+        "ip": "10.201.121.23"
+      }
+    ],
+    "LABLIS": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "epsorcbdl02",
+        "ip": "10.201.121.23"
+      }
+    ],
+    "LABPORTALES": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "epsorcbdl02",
+        "ip": "10.201.121.23"
+      }
+    ],
+    "LABPOS1": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "epsorcbdl02",
+        "ip": "10.201.121.23"
+      }
+    ],
+    "LABTUTEL": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "epsorcbdl02",
+        "ip": "10.201.121.23"
+      }
+    ],
+    "LABSALUDW": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "epsorcbdl02",
+        "ip": "10.201.121.23"
+      }
+    ],
+    "LABAGENW": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "epsorcbdl02",
+        "ip": "10.201.121.23"
+      }
+    ],
+    "LABFNDMTO": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "mdebdfndmtol01",
+        "ip": "10.201.121.91"
+      }
+    ],
+    "QAGWBC": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl01",
+        "ip": "10.201.121.143",
+        "ip_original": "10.201.121.143"
+      }
+    ],
+    "QAGWCC": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl01",
+        "ip": "10.201.121.143",
+        "ip_original": "10.201.121.143"
+      }
+    ],
+    "QAGWCM": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl01",
+        "ip": "10.201.121.143",
+        "ip_original": "10.201.121.143"
+      }
+    ],
+    "QAGWPC": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl01",
+        "ip": "10.201.121.143",
+        "ip_original": "10.201.121.143"
+      }
+    ],
+    "QACST": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl01",
+        "ip": "10.201.121.143",
+        "ip_original": "10.201.121.143"
+      }
+    ],
+    "LABGWSTAGE": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl02",
+        "ip": "10.207.24.208"
+      }
+    ],
+    "LABGWBC1": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl05",
+        "ip": "10.207.24.234"
+      }
+    ],
+    "LABGWCC1": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl05",
+        "ip": "10.207.24.234"
+      }
+    ],
+    "LABGWCM1": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl05",
+        "ip": "10.207.24.234"
+      }
+    ],
+    "LABGWPC1": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl05",
+        "ip": "10.207.24.234"
+      }
+    ],
+    "LABCST1": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl05",
+        "ip": "10.207.24.234"
+      }
+    ],
+    "LABGWBC2": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl06",
+        "ip": "10.207.24.235"
+      }
+    ],
+    "LABGWCC2": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl06",
+        "ip": "10.207.24.235"
+      }
+    ],
+    "LABGWCM2": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl06",
+        "ip": "10.207.24.235"
+      }
+    ],
+    "LABGWPC2": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl06",
+        "ip": "10.207.24.235"
+      }
+    ],
+    "LABCST2": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl06",
+        "ip": "10.207.24.235"
+      }
+    ],
+    "LABGWDWH": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srcsbdl07",
+        "ip": "10.207.26.93"
+      }
+    ],
+    "ibmdb1": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABADM": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABAST": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABATEP1": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABBANCA": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABFINAN1": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABFORMS": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABHA": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABLNF": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABMPREP": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABNOM": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABSBK": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABSIC": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABSINFO": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABSOAT": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABTDM1": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABSALUSOAT": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABPDN": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdl03",
+        "ip": "10.201.121.50"
+      }
+    ],
+    "LABCTM": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srorcbdsa08",
+        "ip": "10.200.152.133",
+        "ip_original": "10.200.152.133"
+      }
+    ],
+    "LABADMIN": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srp8bdl01",
+        "ip": "10.207.26.77"
+      }
+    ],
+    "LABP8": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srp8bdl01",
+        "ip": "10.207.26.77"
+      }
+    ],
+    "LABCVMGR": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srvmgcvbdl01",
+        "ip": "10.207.26.67"
+      }
+    ],
+    "BPMLAB1": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srvrsbdl03",
+        "ip": "10.207.25.33"
+      }
+    ],
+    "LABCGNCS1": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srvrsbdl03",
+        "ip": "10.207.25.33"
+      }
+    ],
+    "LABWBPMP1": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srvrsbdl03",
+        "ip": "10.207.25.33"
+      }
+    ],
+    "WSRRLAB1": [
+      {
+        "ambiente": "Laboratorio",
+        "host": "srvrsbdl03",
+        "ip": "10.207.25.33"
+      }
+    ],
+    "ATEP1": [
+      {
+        "ambiente": "Producción",
+        "host": "arlorcbdp01",
+        "ip": "10.206.4.32"
+      }
+    ],
+    "ATEP2": [
+      {
+        "ambiente": "Producción",
+        "host": "arlorcbdp02",
+        "ip": "10.206.4.34"
+      }
+    ],
+    "MDEPOS": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp05",
+        "ip": "10.206.3.16"
+      }
+    ],
+    "INTRANET": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp06",
+        "ip": "10.206.3.8"
+      }
+    ],
+    "PDNPORTALES": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp06",
+        "ip": "10.206.3.8"
+      }
+    ],
+    "SUSALUD": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp06",
+        "ip": "10.206.3.8"
+      }
+    ],
+    "agen1": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp07",
+        "ip": "10.206.3.17"
+      }
+    ],
+    "mprep1": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp07",
+        "ip": "10.206.3.17"
+      }
+    ],
+    "tute1": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp07",
+        "ip": "10.206.3.17"
+      }
+    ],
+    "ips1": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp07",
+        "ip": "10.206.3.17"
+      }
+    ],
+    "agen2": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp08",
+        "ip": "10.206.3.19"
+      }
+    ],
+    "mprep2": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp08",
+        "ip": "10.206.3.19"
+      }
+    ],
+    "tute2": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp08",
+        "ip": "10.206.3.19"
+      }
+    ],
+    "ips2": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp08",
+        "ip": "10.206.3.19"
+      }
+    ],
+    "salu1": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp09",
+        "ip": "10.206.3.61"
+      }
+    ],
+    "salu2": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp10",
+        "ip": "10.206.3.62"
+      }
+    ],
+    "pdnlis1": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp11",
+        "ip": "10.206.3.26"
+      }
+    ],
+    "pdnlis2": [
+      {
+        "ambiente": "Producción",
+        "host": "epsorcbdp12",
+        "ip": "10.206.3.27"
+      }
+    ],
+    "PDNFNDMTO": [
+      {
+        "ambiente": "Producción",
+        "host": "mdebdfndmtop01",
+        "ip": "10.203.4.150"
+      }
+    ],
+    "PDNFIN1": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp01",
+        "ip": "10.206.2.26"
+      }
+    ],
+    "PDNFORMS1": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp01",
+        "ip": "10.206.2.26"
+      }
+    ],
+    "PDNFIN2": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp02",
+        "ip": "10.206.2.27"
+      }
+    ],
+    "PDNFORMS2": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp02",
+        "ip": "10.206.2.27"
+      }
+    ],
+    "PDN1": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp03",
+        "ip": "10.206.2.131"
+      }
+    ],
+    "ADMIN1": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp03",
+        "ip": "10.206.2.131"
+      }
+    ],
+    "NOM11": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp03",
+        "ip": "10.206.2.131"
+      }
+    ],
+    "PDN2": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp04",
+        "ip": "10.206.2.133"
+      }
+    ],
+    "ADMIN2": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp04",
+        "ip": "10.206.2.133"
+      }
+    ],
+    "NOM12": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp04",
+        "ip": "10.206.2.133"
+      }
+    ],
+    "PDNAST1": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp05",
+        "ip": "10.206.5.64"
+      }
+    ],
+    "PDNCONGLOME1": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp05",
+        "ip": "10.206.5.64"
+      }
+    ],
+    "PDNHA1": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp05",
+        "ip": "10.206.5.64"
+      }
+    ],
+    "PDNSIC1": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp05",
+        "ip": "10.206.5.64"
+      }
+    ],
+    "pdnsalsoat1": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp05",
+        "ip": "10.206.5.64"
+      }
+    ],
+    "PDNAST2": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp06",
+        "ip": "10.206.5.66"
+      }
+    ],
+    "PDNCONGLOME2": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp06",
+        "ip": "10.206.5.66"
+      }
+    ],
+    "PDNHA2": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp06",
+        "ip": "10.206.5.66"
+      }
+    ],
+    "PDNSIC2": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp06",
+        "ip": "10.206.5.66"
+      }
+    ],
+    "pdnsalsoat2": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp06",
+        "ip": "10.206.5.66"
+      }
+    ],
+    "PDNBANCA1": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp07",
+        "ip": "10.206.2.8"
+      }
+    ],
+    "PDNLNF1": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp07",
+        "ip": "10.206.2.8"
+      }
+    ],
+    "PDNSBK1": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp07",
+        "ip": "10.206.2.8"
+      }
+    ],
+    "PDNSINFO1": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp07",
+        "ip": "10.206.2.8"
+      }
+    ],
+    "PDNSOAT1": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp07",
+        "ip": "10.206.2.8"
+      }
+    ],
+    "PDNBANCA2": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp08",
+        "ip": "10.206.2.9"
+      }
+    ],
+    "PDNLNF2": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp08",
+        "ip": "10.206.2.9"
+      }
+    ],
+    "PDNSBK2": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp08",
+        "ip": "10.206.2.9"
+      }
+    ],
+    "PDNSINFO2": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp08",
+        "ip": "10.206.2.9"
+      }
+    ],
+    "PDNSOAT2": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp08",
+        "ip": "10.206.2.9"
+      }
+    ],
+    "BODSUITE": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp09",
+        "ip": "10.206.5.103"
+      }
+    ],
+    "PDNADMIN": [
+      {
+        "ambiente": "Producción",
+        "host": "sgorcbdp09",
+        "ip": "10.206.5.103"
+      }
+    ],
+    "PDNCST1": [
+      {
+        "ambiente": "Producción",
+        "host": "srcsbdp01",
+        "ip": "10.206.2.138"
+      }
+    ],
+    "PDNGWBC1": [
+      {
+        "ambiente": "Producción",
+        "host": "srcsbdp01",
+        "ip": "10.206.2.138"
+      }
+    ],
+    "PDNGWCC1": [
+      {
+        "ambiente": "Producción",
+        "host": "srcsbdp01",
+        "ip": "10.206.2.138"
+      }
+    ],
+    "PDNGWCM1": [
+      {
+        "ambiente": "Producción",
+        "host": "srcsbdp01",
+        "ip": "10.206.2.138"
+      }
+    ],
+    "PDNGWPC1": [
+      {
+        "ambiente": "Producción",
+        "host": "srcsbdp01",
+        "ip": "10.206.2.138"
+      }
+    ],
+    "PDNCST2": [
+      {
+        "ambiente": "Producción",
+        "host": "srcsbdp02",
+        "ip": "10.206.2.139"
+      }
+    ],
+    "PDNGWBC2": [
+      {
+        "ambiente": "Producción",
+        "host": "srcsbdp02",
+        "ip": "10.206.2.139"
+      }
+    ],
+    "PDNGWCC2": [
+      {
+        "ambiente": "Producción",
+        "host": "srcsbdp02",
+        "ip": "10.206.2.139"
+      }
+    ],
+    "PDNGWCM2": [
+      {
+        "ambiente": "Producción",
+        "host": "srcsbdp02",
+        "ip": "10.206.2.139"
+      }
+    ],
+    "PDNGWPC2": [
+      {
+        "ambiente": "Producción",
+        "host": "srcsbdp02",
+        "ip": "10.206.2.139"
+      }
+    ],
+    "PDNGWDWH": [
+      {
+        "ambiente": "Producción",
+        "host": "srcsbdp04",
+        "ip": "10.206.2.147"
+      }
+    ],
+    "PDNGWSTAGE": [
+      {
+        "ambiente": "Producción",
+        "host": "srcsbdp04",
+        "ip": "10.206.2.147"
+      }
+    ],
+    "OEMDB": [
+      {
+        "ambiente": "Producción",
+        "host": "srcsoem01",
+        "ip": "10.216.24.58"
+      }
+    ],
+    "PDNBIGDA1": [
+      {
+        "ambiente": "Producción",
+        "host": "srorcbdp01",
+        "ip": "10.206.2.16"
+      }
+    ],
+    "PBIGARLD1": [
+      {
+        "ambiente": "Producción",
+        "host": "srorcbdp01",
+        "ip": "10.206.2.16"
+      }
+    ],
+    "PBIGEPS1": [
+      {
+        "ambiente": "Producción",
+        "host": "srorcbdp01",
+        "ip": "10.206.2.16"
+      }
+    ],
+    "PDNBIGDA2": [
+      {
+        "ambiente": "Producción",
+        "host": "srorcbdp02",
+        "ip": "10.206.2.17"
+      }
+    ],
+    "PBIGARLD2": [
+      {
+        "ambiente": "Producción",
+        "host": "srorcbdp02",
+        "ip": "10.206.2.17"
+      }
+    ],
+    "PBIGEPS2": [
+      {
+        "ambiente": "Producción",
+        "host": "srorcbdp02",
+        "ip": "10.206.2.17"
+      }
+    ],
+    "GCPDN": [
+      {
+        "ambiente": "Producción",
+        "host": "srorcbdp05",
+        "ip": "10.216.24.118"
+      }
+    ],
+    "CONTINGE": [
+      {
+        "ambiente": "Producción",
+        "host": "srorcbdp07",
+        "ip": "10.216.24.120"
+      }
+    ],
+    "PDNAUDIT": [
+      {
+        "ambiente": "Producción",
+        "host": "srorcbdp07",
+        "ip": "10.216.24.120"
+      }
+    ],
+    "PDNCTM": [
+      {
+        "ambiente": "Producción",
+        "host": "srorcbdp08",
+        "ip": "10.216.24.121"
+      },
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "srorcbdsa08",
+        "ip": "10.200.152.133",
+        "ip_original": "10.200.152.133"
+      }
+    ],
+    "RMANSURA": [
+      {
+        "ambiente": "Producción",
+        "host": "srorcbdp08",
+        "ip": "10.216.24.121"
+      },
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "srorcbdsa08",
+        "ip": "10.200.152.133",
+        "ip_original": "10.200.152.133"
+      }
+    ],
+    "VERIDATA": [
+      {
+        "ambiente": "Producción",
+        "host": "srorcggi02",
+        "ip": "10.216.24.117"
+      }
+    ],
+    "PDNHYP1": [
+      {
+        "ambiente": "Producción",
+        "host": "srp8bdp01",
+        "ip": "10.206.5.72"
+      }
+    ],
+    "PDNHYP2": [
+      {
+        "ambiente": "Producción",
+        "host": "srp8bdp02",
+        "ip": "10.206.5.73"
+      }
+    ],
+    "PDNIMAGE2": [
+      {
+        "ambiente": "Producción",
+        "host": "srp8bdp03",
+        "ip": "10.203.6.7"
+      }
+    ],
+    "PDNIMAGE1": [
+      {
+        "ambiente": "Producción",
+        "host": "srp8bdp04",
+        "ip": "10.203.6.6"
+      }
+    ],
+    "PDNCVMGR": [
+      {
+        "ambiente": "Producción",
+        "host": "srvmgcvbdp01",
+        "ip": "10.206.5.164"
+      }
+    ],
+    "WSRRPDN1": [
+      {
+        "ambiente": "Producción",
+        "host": "srvrsbdp03",
+        "ip": "10.206.5.171"
+      }
+    ],
+    "WSRRPDN2": [
+      {
+        "ambiente": "Producción",
+        "host": "srvrsbdp04",
+        "ip": "10.206.5.175"
+      }
+    ],
+    "ATEP": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "arlorcbdsa01",
+        "ip": "10.200.154.57"
+      }
+    ],
+    "saludweb": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "epsorcbdsa02",
+        "ip": "10.200.154.70"
+      }
+    ],
+    "agenweb": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "epsorcbdsa02",
+        "ip": "10.200.154.70"
+      }
+    ],
+    "ipsa": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "epsorcbdsa02",
+        "ip": "10.200.154.70"
+      }
+    ],
+    "tutelas": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "epsorcbdsa02",
+        "ip": "10.200.154.70"
+      }
+    ],
+    "PDNLIS": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "epsorcbdsa02",
+        "ip": "10.200.154.70"
+      }
+    ],
+    "PDNMPREP": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "epsorcbdsa02",
+        "ip": "10.200.154.70"
+      }
+    ],
+    "PDNBANCA": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "sgorcbdsa01",
+        "ip": "10.200.154.66"
+      }
+    ],
+    "PDNFIN": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "sgorcbdsa01",
+        "ip": "10.200.154.66"
+      }
+    ],
+    "PDNLNF": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "sgorcbdsa01",
+        "ip": "10.200.154.66"
+      }
+    ],
+    "PDNSBK": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "sgorcbdsa01",
+        "ip": "10.200.154.66"
+      }
+    ],
+    "PDNSOAT": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "sgorcbdsa01",
+        "ip": "10.200.154.66"
+      }
+    ],
+    "PDN": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "sgorcbdsa02",
+        "ip": "10.200.154.67"
+      }
+    ],
+    "ADMIN": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "sgorcbdsa02",
+        "ip": "10.200.154.67"
+      }
+    ],
+    "PDNAST": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "sgorcbdsa03",
+        "ip": "10.200.154.68"
+      }
+    ],
+    "PDNHA": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "sgorcbdsa03",
+        "ip": "10.200.154.68"
+      }
+    ],
+    "PDNSIC": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "sgorcbdsa03",
+        "ip": "10.200.154.68"
+      }
+    ],
+    "WSRRPDN": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "soamdebdsa01",
+        "ip": "10.200.152.42"
+      }
+    ],
+    "PDNCST": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "srcsbdsa01",
+        "ip": "10.200.154.15"
+      }
+    ],
+    "PDNGWBC": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "srcsbdsa01",
+        "ip": "10.200.154.15"
+      }
+    ],
+    "PDNGWCC": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "srcsbdsa01",
+        "ip": "10.200.154.15"
+      }
+    ],
+    "PDNGWCM": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "srcsbdsa01",
+        "ip": "10.200.154.15"
+      }
+    ],
+    "PDNGWPC": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "srcsbdsa01",
+        "ip": "10.200.154.15"
+      }
+    ],
+    "PDNIMAGE": [
+      {
+        "ambiente": "Sitio Alterno",
+        "host": "srp8bdsa01",
+        "ip": "10.200.154.73"
+      }
+    ],
+    "STGPDNFNDMTO": [
+      {
+        "ambiente": "Staging",
+        "host": "srbogbdstagiep01",
+        "ip": "10.203.4.56"
+      }
+    ],
+    "STAGWBC": [
+      {
+        "ambiente": "Staging",
+        "host": "srcsbdp06",
+        "ip": "10.207.25.182"
+      }
+    ],
+    "STAGWCC": [
+      {
+        "ambiente": "Staging",
+        "host": "srcsbdp06",
+        "ip": "10.207.25.182"
+      }
+    ],
+    "STAGWCM": [
+      {
+        "ambiente": "Staging",
+        "host": "srcsbdp06",
+        "ip": "10.207.25.182"
+      }
+    ],
+    "STAGWPC": [
+      {
+        "ambiente": "Staging",
+        "host": "srcsbdp06",
+        "ip": "10.207.25.182"
+      }
+    ],
+    "STGSALUDWEB": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGSUSAL": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGADMIN": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGATEP": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGINTRA": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGIPSA": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGNOM1": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGPDN": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGPDNADMIN": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGPDNAS": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGPDNBA": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGPDNFI": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGPDNHA": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGAGENWEB": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGPDNLIS": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGPDNLN": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGPDNMPREP": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGPDNPO": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGPDNSB": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGPDNSC": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGPDNSI": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGPDNSO": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGTUTELAS": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ],
+    "STGPDNIMAGE": [
+      {
+        "ambiente": "Staging",
+        "host": "srorcbdstg01",
+        "ip": "10.203.4.103"
+      }
+    ]
+  }
+}

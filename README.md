@@ -151,6 +151,30 @@ SURASTAT/[PASS]@cluster1b-scan.suranet.com:1537/ADMIN
 - La lista también se recarga al volver a enfocar la ventana.
 - Si `.config` no existe, el desplegable queda vacío. Una conexión inexistente o un error de cifrado muestra un error sin modificar `.env`.
 
+## Consola SSH
+
+El panel incluye **Instancia SSH (`instancias_ips.json`)**, justo debajo de la conexión activa. El archivo `instancias_ips.json` de la raíz se lee en el servidor y se aplana a instancias concretas:
+
+```text
+PDNCTM · Sitio Alterno · srorcbdp08 (10.200.152.133)
+DLLHYP · Desarrollo · srbogbddd06 (10.208.25.21)
+DLLHYP · Desarrollo · srbogbddd06 (10.208.25.140)
+```
+
+- El buscador filtra por base, ambiente, host o IP y muestra `coincidencias/total`. El botón **↻** recarga el JSON.
+- Al elegir una instancia y pulsar **Abrir consola SSH** se abre un modal con un terminal xterm interactivo sobre una PTY real (`node-pty`).
+- Al cerrar el modal se mata la sesión SSH. También se cierra al recargar o abandonar la página.
+- La IP **nunca** se toma del navegador: se envía solo un ID validado contra `instancias_ips.json`.
+- El usuario SSH se configura únicamente en `.env`:
+  ```text
+  SSH_USER=oracle
+  SSH_PORT=22
+  SSH_BIN=ssh
+  SSH_OPTS=-o StrictHostKeyChecking=accept-new -o ConnectTimeout=10
+  ```
+  `SSH_USER` es obligatorio; los demás son opcionales. El panel ⚙ conserva estas variables al guardar `.env`, pero no las muestra ni las expone por API.
+- La autenticación es la del cliente `ssh` del servidor: llave/agente si está disponible y, si no, el prompt interactivo de password dentro del terminal. La password escrita viaja por `localhost` hasta la PTY; no se guarda, no se loguea y no se devuelve en `/api/settings`.
+
 ## Ajustes desde la interfaz (engranaje ⚙)
 
 El botón ⚙ de la barra superior abre un panel que lee y escribe el archivo `.env` del proyecto:

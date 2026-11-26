@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { downloadTemplate } from '../lib/docx-client';
 import { downloadReport } from '../lib/pdf-client';
 import { isValidDiskgroup } from '../lib/queries';
+import type { SshInstanceOption } from '../lib/ssh-shared';
 import type { JobSnapshot, JobStatus, QueryMeta, QueryResult } from '../lib/types';
 import DiskFreeModal from './DiskFreeModal';
 import ReportTable from './ReportTable';
+import SshConsoleModal from './SshConsoleModal';
 import TerminalPanel from './TerminalPanel';
 
 const statusLabel: Record<JobStatus | 'idle', string> = {
@@ -50,6 +52,12 @@ export default function QueryRunner() {
   const [connectionError, setConnectionError] = useState(false);
   const [templateBusy, setTemplateBusy] = useState(false);
   const [templateError, setTemplateError] = useState('');
+  const [sshInstances, setSshInstances] = useState<SshInstanceOption[]>([]);
+  const [sshInstanceSearch, setSshInstanceSearch] = useState('');
+  const [sshSelectedId, setSshSelectedId] = useState('');
+  const [sshInstancesLoading, setSshInstancesLoading] = useState(false);
+  const [sshInstancesError, setSshInstancesError] = useState('');
+  const [sshConsoleOpen, setSshConsoleOpen] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const detailSourcesRef = useRef<Map<string, EventSource>>(new Map());
   const detailTokensRef = useRef<Map<string, number>>(new Map());
@@ -124,6 +132,34 @@ export default function QueryRunner() {
       active = false;
       window.removeEventListener('dg:settings-changed', load);
     };
+  }, []);
+
+  async function refreshSshInstances(): Promise<void> {
+    setSshInstancesLoading(true);
+    setSshInstancesError('');
+    try {
+      const response = await fetch('/api/ssh/instances');
+      const data = (await response.json()) as {
+        instances?: SshInstanceOption[];
+        error?: string;
+      };
+      if (!response.ok) throw new Error(data.error ?? 'No se pudo leer instancias_ips.json.');
+
+      const list = data.instances ?? [];
+      setSshInstances(list);
+      setSshSelectedId((previous) =>
+        previous && list.some((instance) => instance.id === previous) ? previous : '',
+      );
+    } catch (cause) {
+      setSshInstances([]);
+      setSshInstancesError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setSshInstancesLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void refreshSshInstances();
   }, []);
 
   async function refreshConnections(): Promise<void> {
@@ -399,6 +435,15 @@ export default function QueryRunner() {
           .includes(searchText),
       )
     : savedConnections;
+  const sshSearchText = sshInstanceSearch.trim().toLowerCase();
+  const visibleSshInstances = sshSearchText
+    ? sshInstances.filter((instance) =>
+        `${instance.database} ${instance.ambiente} ${instance.host} ${instance.ip}`
+          .toLowerCase()
+          .includes(sshSearchText),
+      )
+    : sshInstances;
+  const selectedSshInstance = sshInstances.find((instance) => instance.id === sshSelectedId);
 
   async function buildTemplate(): Promise<void> {
     setTemplateBusy(true);
@@ -486,6 +531,61 @@ export default function QueryRunner() {
             <code>{connectionLabel}</code>
           </div>
         )}
+
+        <div class="field ssh-picker">
+          <span>Instancia SSH (instancias_ips.json)</span>
+          <div class="connection-search">
+            <span class="connection-search__icon" aria-hidden="true">🔎</span>
+            <input
+              type="text"
+              value={sshInstanceSearch}
+              onInput={(event) => setSshInstanceSearch((event.target as HTMLInputElement).value)}
+              placeholder="Buscar por base, ambiente, host o IP…"
+            />
+            <span class="connection-search__count">
+              {visibleSshInstances.length}/{sshInstances.length}
+            </span>
+          </div>
+          <div class="connection-row">
+            <div class="select-wrap">
+              <select
+                value={sshSelectedId}
+                onChange={(event) => setSshSelectedId((event.target as HTMLSelectElement).value)}
+              >
+                <option value="">Selecciona una instancia…</option>
+                {visibleSshInstances.map((instance) => (
+                  <option key={instance.id} value={instance.id} title={instance.label}>
+                    {instance.label}
+                  </option>
+                ))}
+                {visibleSshInstances.length === 0 && (
+                  <option value="" disabled>Sin coincidencias</option>
+                )}
+              </select>
+              <span class="select-chevron" aria-hidden="true">▾</span>
+            </div>
+            <button
+              type="button"
+              class="button button--ghost button--small"
+              onClick={() => void refreshSshInstances()}
+              disabled={sshInstancesLoading}
+              title="Recargar instancias desde instancias_ips.json"
+            >
+              ↻
+            </button>
+          </div>
+          <small class={sshInstancesError ? 'hint hint--error' : 'hint'}>
+            {sshInstancesError || 'Selecciona la base, ambiente e IP concretos para abrir la consola SSH.'}
+          </small>
+          <button
+            type="button"
+            class="button button--ghost button--ssh"
+            onClick={() => setSshConsoleOpen(true)}
+            disabled={!sshSelectedId || !selectedSshInstance}
+          >
+            Abrir consola SSH
+          </button>
+        </div>
 
         <label class="field">
           <span>Etiqueta del informe</span>
@@ -599,6 +699,12 @@ export default function QueryRunner() {
         open={checkModalOpen}
         onClose={() => setCheckModalOpen(false)}
         onResult={upsertCheckResult}
+      />
+
+      <SshConsoleModal
+        open={sshConsoleOpen}
+        instance={selectedSshInstance}
+        onClose={() => setSshConsoleOpen(false)}
       />
     </main>
   );
