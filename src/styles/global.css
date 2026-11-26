@@ -268,7 +268,7 @@ input[type="text"]:focus {
 .button--small { padding: 8px 11px; font-size: 13px; }
 
 .connection-picker {
-  margin-top: 4px;
+  margin: 0 0 14px;
   padding: 14px;
   border: 1px solid #243449;
   border-radius: 12px;

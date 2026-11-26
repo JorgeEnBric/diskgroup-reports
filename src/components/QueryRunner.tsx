@@ -408,50 +408,6 @@ export default function QueryRunner() {
           <span class={`status status--${status}`}>{statusLabel[status]}</span>
         </div>
 
-        {connectionLabel && (
-          <div class="connection-info">
-            <span>Conexión activa</span>
-            <code>{connectionLabel}</code>
-          </div>
-        )}
-
-        <label class="field">
-          <span>Etiqueta del informe</span>
-          <input
-            type="text"
-            value={diskgroup}
-            onInput={(event) => setDiskgroup((event.target as HTMLInputElement).value.toUpperCase())}
-            placeholder="DATA"
-            maxLength={30}
-            disabled={busy}
-          />
-          <small class={diskgroupValid ? 'hint' : 'hint hint--error'}>
-            Las consultas maestras son globales; esta etiqueta solo identifica el reporte. Solo letras, números y guion bajo (máx. 30).
-          </small>
-        </label>
-
-        <div class="field">
-          <span>Consultas maestras</span>
-          <div class="query-list">
-            {queries.filter((query) => !query.hidden).map((query) => (
-              <label class="query-option" key={query.id}>
-                <input
-                  type="checkbox"
-                  checked={selected.includes(query.id)}
-                  onChange={() => toggleQuery(query.id)}
-                  disabled={busy}
-                />
-                <span>
-                  <strong>{query.title}</strong>
-                  <small>{query.description}</small>
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {error && <p class="alert">{error}</p>}
-
         <div class="field connection-picker">
           <span>Conexión guardada (.config)</span>
           <div class="connection-search">
@@ -504,6 +460,50 @@ export default function QueryRunner() {
             {connectionMessage || 'Las conexiones se leen de .config.'}
           </small>
         </div>
+
+        {connectionLabel && (
+          <div class="connection-info">
+            <span>Conexión activa</span>
+            <code>{connectionLabel}</code>
+          </div>
+        )}
+
+        <label class="field">
+          <span>Etiqueta del informe</span>
+          <input
+            type="text"
+            value={diskgroup}
+            onInput={(event) => setDiskgroup((event.target as HTMLInputElement).value.toUpperCase())}
+            placeholder="DATA"
+            maxLength={30}
+            disabled={busy}
+          />
+          <small class={diskgroupValid ? 'hint' : 'hint hint--error'}>
+            Las consultas maestras son globales; esta etiqueta solo identifica el reporte. Solo letras, números y guion bajo (máx. 30).
+          </small>
+        </label>
+
+        <div class="field">
+          <span>Consultas maestras</span>
+          <div class="query-list">
+            {queries.filter((query) => !query.hidden).map((query) => (
+              <label class="query-option" key={query.id}>
+                <input
+                  type="checkbox"
+                  checked={selected.includes(query.id)}
+                  onChange={() => toggleQuery(query.id)}
+                  disabled={busy}
+                />
+                <span>
+                  <strong>{query.title}</strong>
+                  <small>{query.description}</small>
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {error && <p class="alert">{error}</p>}
 
         <div class="actions">
           <button class="button button--primary" onClick={start} disabled={busy || !diskgroupValid || selected.length === 0}>
