@@ -1,6 +1,6 @@
 # Validador de Diskgroups
 
-Herramienta web local (sin login) para ejecutar 3 consultas maestras contra diskgroups ASM mediante **SQLcl (por defecto)** o **SQL\*Plus**, lanzado desde una **PTY (ConPTY en Windows)** y mostrado en vivo en un terminal xterm.js. Genera un reporte en PDF con portada, una sección por consulta y resumen.
+Herramienta web local (sin login) para ejecutar 3 consultas maestras contra diskgroups ASM mediante **SQLcl (por defecto)** o **SQL\*Plus**, lanzado desde una **PTY (ConPTY en Windows)** y mostrado en vivo en un terminal xterm.js. Genera un reporte en PDF con portada, una sección por consulta y resumen, y también rellena el `Template.docx` incluido en la raíz.
 
 ## Requisitos
 
@@ -58,12 +58,25 @@ El servidor compilado escucha en `127.0.0.1:4321` (configurable en `astro.config
 1. Escribe la etiqueta del informe (por defecto `DATA`); las consultas son globales.
 2. Marca las consultas maestras a ejecutar.
 3. Pulsa **Ejecutar consultas**. Verás la salida real de SQLcl/SQL\*Plus en el terminal.
-4. Revisa la tabla de resultados y pulsa **Descargar PDF**.
+4. Revisa la tabla de resultados y pulsa **Descargar PDF** o **Construir template** para descargar el `Template.docx` relleno.
 5. En la tabla **1. Diskgroups ASM**, usa la columna **ACCION → 🔍 Ver discos** para consultar los discos de ese diskgroup. El resultado se añade como una sección nueva sin borrar las consultas maestras y también entra en el PDF.
 6. Cada sección de discos tiene un botón **✕** para cerrarla. Puedes tener varias abiertas a la vez; al cerrar una desaparece del DOM y de futuros PDF.
 7. En **2. Discos candidatos**, usa **ACCION → 📋 Copiar función** para copiar al portapapeles la función `Valido_disco()` y la invocación con el **PATH completo** de esa fila, por ejemplo `Valido_disco /dev/oracleasm/DISCO_1`.
 8. Pulsa **Confirmar disco libre**, escribe un nombre de disco y consulta. Si existe se muestra `DISCO YA EXISTE!!!` con sus datos; si no, `Disco consultado NOMBRE, es un disco libre`. Cada resultado se añade como sección eliminable con **✕**; quitarla también la excluye del PDF.
-9. Usa **Conexión guardada (.config)**, justo encima de la botonera principal, para cambiar entre las conexiones configuradas a mano. Al elegir una se aplica y se guarda en `.env`.
+9. Usa **Conexión guardada (.config)**, justo encima de **Conexión activa**, para cambiar entre las conexiones configuradas a mano. Al elegir una se aplica y se guarda en `.env`.
+
+## Template Word
+
+El botón **Construir template** envía los resultados al servidor, rellena `Template.docx` (en la raíz del proyecto) y descarga el documento completo, conservando logo, encabezado, estilos y notas.
+
+Marcadores reemplazados:
+
+- `[Fecha de hoy]` → fecha actual en formato `dd/MM/yyyy`.
+- `[Etiqueta de reporte]` → etiqueta escrita en el formulario (por ejemplo `DATA`).
+- `[Tabla1. Diskgroups ASM]` → tabla de la consulta `dg_summary`.
+- `[Tabla2. Discos candidatos]` → tabla de la consulta `dg_disks`.
+
+Si alguna consulta no se ejecutó, su tabla queda con una fila `Sin datos`. El nombre descargado es `reporte_diskgroups_<ETIQUETA>_<YYYYMMDD>.docx`. El procesamiento ocurre solo en el servidor: el navegador recibe el `.docx` ya terminado.
 
 ## Discos del diskgroup
 
@@ -189,6 +202,9 @@ Los `set lines 180 pages 200` y `col ... format` incluidos en las consultas se r
 | `src/lib/jobs.ts` | Registro de jobs en memoria y pub/sub de eventos. |
 | `src/components/*.tsx` | Islas Preact: ajustes, controles, terminal xterm.js y reporte. |
 | `src/lib/pdf-client.ts` | Generación del PDF con jsPDF + autoTable. |
+| `src/lib/docx-template.ts` | Relleno de `Template.docx` y construcción de las tablas Word. |
+| `src/lib/docx-client.ts` | Descarga del `.docx` generado en el navegador. |
+| `src/pages/api/build-template.ts` | Endpoint que devuelve el `.docx` relleno. |
 
 ## Seguridad
 

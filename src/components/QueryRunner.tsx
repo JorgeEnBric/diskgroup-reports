@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { downloadTemplate } from '../lib/docx-client';
 import { downloadReport } from '../lib/pdf-client';
 import { isValidDiskgroup } from '../lib/queries';
 import type { JobSnapshot, JobStatus, QueryMeta, QueryResult } from '../lib/types';
@@ -47,6 +48,8 @@ export default function QueryRunner() {
   const [connectionSearch, setConnectionSearch] = useState('');
   const [connectionMessage, setConnectionMessage] = useState('');
   const [connectionError, setConnectionError] = useState(false);
+  const [templateBusy, setTemplateBusy] = useState(false);
+  const [templateError, setTemplateError] = useState('');
   const eventSourceRef = useRef<EventSource | null>(null);
   const detailSourcesRef = useRef<Map<string, EventSource>>(new Map());
   const detailTokensRef = useRef<Map<string, number>>(new Map());
@@ -397,6 +400,22 @@ export default function QueryRunner() {
       )
     : savedConnections;
 
+  async function buildTemplate(): Promise<void> {
+    setTemplateBusy(true);
+    setTemplateError('');
+    try {
+      await downloadTemplate({
+        diskgroup: diskgroup.trim().toUpperCase(),
+        results: allResults,
+        queries,
+      });
+    } catch (cause) {
+      setTemplateError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setTemplateBusy(false);
+    }
+  }
+
   return (
     <main class="layout">
       <section class="panel controls-panel">
@@ -504,6 +523,7 @@ export default function QueryRunner() {
         </div>
 
         {error && <p class="alert">{error}</p>}
+        {templateError && <p class="alert">{templateError}</p>}
 
         <div class="actions">
           <button class="button button--primary" onClick={start} disabled={busy || !diskgroupValid || selected.length === 0}>
@@ -521,6 +541,13 @@ export default function QueryRunner() {
             disabled={allResults.length === 0}
           >
             Descargar PDF
+          </button>
+          <button
+            class="button button--template"
+            onClick={() => void buildTemplate()}
+            disabled={busy || templateBusy || !diskgroupValid || allResults.length === 0}
+          >
+            {templateBusy ? 'Construyendo…' : 'Construir template'}
           </button>
         </div>
       </section>

@@ -265,6 +265,7 @@ input[type="text"]:focus {
 .button--primary { background: #0284c7; color: white; }
 .button--ghost { background: #1e293b; color: var(--text); border-color: #334155; }
 .button--download { background: #4f46e5; color: white; }
+.button--template { background: #0f766e; color: white; }
 .button--small { padding: 8px 11px; font-size: 13px; }
 
 .connection-picker {
