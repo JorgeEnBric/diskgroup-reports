@@ -27,6 +27,7 @@ const KEYS = [
   'NLS_LANG',
   'JOB_TIMEOUT_MS',
   'JAVA_OPTS',
+  'CONFIG_ENCRYPTION_KEY',
 ] as const;
 
 function read(name: string, fallback = ''): string {
@@ -209,6 +210,7 @@ export async function saveSettings(input: SettingsInput): Promise<PublicSettings
     NLS_LANG: settings.nlsLang,
     JOB_TIMEOUT_MS: String(settings.timeoutMs),
     JAVA_OPTS: settings.javaOpts,
+    CONFIG_ENCRYPTION_KEY: read('CONFIG_ENCRYPTION_KEY'),
   };
 
   const content = [

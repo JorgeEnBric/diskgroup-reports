@@ -1,0 +1,13 @@
+{
+  "password": "<BASE64_NONCE_TAG_CIPHERTEXT>",
+  "PROD": {
+    "user": "system",
+    "connect": "//host:1521/SERVICIO",
+    "tnsAdmin": ""
+  },
+  "LAB": {
+    "user": "system",
+    "connect": "//lab:1521/LAB",
+    "tnsAdmin": "/oracle/network/admin"
+  }
+}

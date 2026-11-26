@@ -23,6 +23,12 @@ interface DiskPanel {
   error: string;
 }
 
+interface SavedConnectionOption {
+  name: string;
+  user: string;
+  connect: string;
+}
+
 export default function QueryRunner() {
   const [diskgroup, setDiskgroup] = useState('DATA');
   const [queries, setQueries] = useState<QueryMeta[]>([]);
@@ -36,6 +42,10 @@ export default function QueryRunner() {
   const [diskPanels, setDiskPanels] = useState<DiskPanel[]>([]);
   const [checkResults, setCheckResults] = useState<QueryResult[]>([]);
   const [checkModalOpen, setCheckModalOpen] = useState(false);
+  const [savedConnections, setSavedConnections] = useState<SavedConnectionOption[]>([]);
+  const [selectedConnection, setSelectedConnection] = useState('');
+  const [connectionMessage, setConnectionMessage] = useState('');
+  const [connectionError, setConnectionError] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const detailSourcesRef = useRef<Map<string, EventSource>>(new Map());
   const detailTokensRef = useRef<Map<string, number>>(new Map());
@@ -110,6 +120,56 @@ export default function QueryRunner() {
       active = false;
       window.removeEventListener('dg:settings-changed', load);
     };
+  }, []);
+
+  async function refreshConnections(): Promise<void> {
+    try {
+      const response = await fetch('/api/connections');
+      const data = (await response.json()) as {
+        connections?: SavedConnectionOption[];
+        error?: string;
+      };
+      if (!response.ok) throw new Error(data.error ?? 'No se pudo leer .config.');
+
+      const list = data.connections ?? [];
+      setSavedConnections(list);
+      setConnectionMessage((previous) =>
+        previous.startsWith('Conexión') ? previous : `${list.length} conexión(es) en .config`,
+      );
+      setConnectionError(false);
+    } catch (cause) {
+      setConnectionMessage(cause instanceof Error ? cause.message : String(cause));
+      setConnectionError(true);
+    }
+  }
+
+  async function applyConnection(name: string): Promise<void> {
+    if (!name) return;
+    setConnectionMessage(`Aplicando conexión ${name}…`);
+    setConnectionError(false);
+
+    try {
+      const response = await fetch('/api/connections', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-requested-with': 'XMLHttpRequest' },
+        body: JSON.stringify({ name }),
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? 'No se pudo aplicar la conexión.');
+
+      setSelectedConnection(name);
+      setConnectionMessage(`Conexión ${name} aplicada`);
+      window.dispatchEvent(new Event('dg:settings-changed'));
+    } catch (cause) {
+      setConnectionMessage(cause instanceof Error ? cause.message : String(cause));
+      setConnectionError(true);
+    }
+  }
+
+  useEffect(() => {
+    void refreshConnections();
+    window.addEventListener('focus', refreshConnections);
+    return () => window.removeEventListener('focus', refreshConnections);
   }, []);
 
   async function start(): Promise<void> {
@@ -382,6 +442,40 @@ export default function QueryRunner() {
 
         {error && <p class="alert">{error}</p>}
 
+        <div class="field connection-picker">
+          <span>Conexión guardada (.config)</span>
+          <div class="connection-row">
+            <select
+              value={selectedConnection}
+              onChange={(event) => void applyConnection((event.target as HTMLSelectElement).value)}
+              disabled={busy}
+            >
+              <option value="">Selecciona una conexión…</option>
+              {savedConnections.map((connection) => (
+                <option
+                  key={connection.name}
+                  value={connection.name}
+                  title={`${connection.user}@${connection.connect}`}
+                >
+                  {connection.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              class="button button--ghost button--small"
+              onClick={() => void refreshConnections()}
+              disabled={busy}
+              title="Recargar conexiones desde .config"
+            >
+              ↻
+            </button>
+          </div>
+          <small class={connectionError ? 'hint hint--error' : 'hint'}>
+            {connectionMessage || 'Las conexiones se leen de .config.'}
+          </small>
+        </div>
+
         <div class="actions">
           <button class="button button--primary" onClick={start} disabled={busy || !diskgroupValid || selected.length === 0}>
             {busy ? 'Ejecutando…' : 'Ejecutar consultas'}
@@ -425,6 +519,7 @@ export default function QueryRunner() {
           results={panel.result ? [panel.result] : []}
           queries={queries}
           title={`Discos del diskgroup ${panel.diskgroupName}`}
+          hideQueryHeader
           notice={panel.error || (panel.loading ? 'Consultando discos…' : undefined)}
           noticeVariant={panel.error ? 'error' : panel.loading ? 'info' : undefined}
           onClose={() => closeDisks(panel.diskgroupName)}

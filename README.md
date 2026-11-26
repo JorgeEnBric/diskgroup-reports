@@ -63,6 +63,7 @@ El servidor compilado escucha en `127.0.0.1:4321` (configurable en `astro.config
 6. Cada sección de discos tiene un botón **✕** para cerrarla. Puedes tener varias abiertas a la vez; al cerrar una desaparece del DOM y de futuros PDF.
 7. En **2. Discos candidatos**, usa **ACCION → 📋 Copiar función** para copiar al portapapeles la función `Valido_disco()` y la invocación con el **PATH completo** de esa fila, por ejemplo `Valido_disco /dev/oracleasm/DISCO_1`.
 8. Pulsa **Confirmar disco libre**, escribe un nombre de disco y consulta. Si existe se muestra `DISCO YA EXISTE!!!` con sus datos; si no, `Disco consultado NOMBRE, es un disco libre`. Cada resultado se añade como sección eliminable con **✕**; quitarla también la excluye del PDF.
+9. Usa **Conexión guardada (.config)**, justo encima de la botonera principal, para cambiar entre las conexiones configuradas a mano. Al elegir una se aplica y se guarda en `.env`.
 
 ## Discos del diskgroup
 
@@ -83,6 +84,7 @@ ORDER BY name;
 - `HEADER_STATUS <> 'MEMBER'` o `STATE <> 'NORMAL'` se marca como ERROR; sin filas se marca WARN.
 - Si pulsas de nuevo **Ver discos** en el mismo diskgroup, se refresca su tarjeta; no se crea un duplicado.
 - Cerrar una tarjeta solo la quita de la página: el job en servidor continúa, pero su resultado se ignora.
+- Cada tarjeta muestra un único título, `Discos del diskgroup NOMBRE`, sin el `<h3>` duplicado.
 - Las tablas no muestran badges de estado (`OK`/`WARN`/`ERROR`). El indicador superior de ejecución se conserva.
 
 ## Copiar función para discos candidatos
@@ -110,6 +112,32 @@ where name = '{{DISK_NAME}}';
 - Si no hay filas, muestra `Disco consultado NOMBRE, es un disco libre`.
 - El resultado se añade como una sección más con botón **✕**, con un único título `Confirmar disco libre NOMBRE` (sin corchetes) y el mismo color del aviso del modal: rojo si el disco existe, verde si está libre, azul mientras consulta. Al cerrar esa sección se elimina del DOM y de futuros PDF.
 - Cerrar el modal mientras consulta cancela el job y descarta el resultado.
+
+## Conexiones guardadas (.config)
+
+El panel de la izquierda incluye un desplegable **Conexión guardada (.config)** justo encima de los botones principales. Copia `.config.example` a `.config` y edítalo a mano con este formato:
+
+```json
+{
+  "password": "<BASE64_NONCE_TAG_CIPHERTEXT>",
+  "PROD": {
+    "user": "system",
+    "connect": "//host:1521/SERVICIO",
+    "tnsAdmin": ""
+  },
+  "LAB": {
+    "user": "system",
+    "connect": "//lab:1521/LAB",
+    "tnsAdmin": "/oracle/network/admin"
+  }
+}
+```
+
+- `password` es una clave reservada: una sola contraseña cifrada compartida por todas las conexiones. El resto de claves de primer nivel son los nombres del desplegable.
+- Cifrado: AES-256-GCM con clave de 32 bytes en `CONFIG_ENCRYPTION_KEY` (base64 o hexadecimal). El valor guardado es base64 de `nonce(12) + tag(16) + ciphertext`.
+- Al elegir una conexión se descifra la contraseña en el servidor, se escriben `DB_USER`, `DB_CONNECT`, `TNS_ADMIN` y `DB_PASSWORD` en `.env` y se actualiza la conexión activa. El navegador nunca recibe la contraseña.
+- El botón **↻** recarga la lista después de editar `.config`; también se recarga al volver a enfocar la ventana.
+- Si `.config` no existe, el desplegable queda vacío. Un JSON inválido o una conexión inexistente muestra un error sin modificar `.env`.
 
 ## Ajustes desde la interfaz (engranaje ⚙)
 
@@ -152,6 +180,8 @@ Los `set lines 180 pages 200` y `col ... format` incluidos en las consultas se r
 | `src/pages/api/run.ts` | Valida la petición, crea el job y lanza SQLcl/SQL\*Plus en PTY. |
 | `src/pages/api/run-disks.ts` | Consulta bajo demanda “Discos del diskgroup” con parámetro validado. |
 | `src/pages/api/check-disk-free.ts` | Consulta oculta “Confirmar disco libre” con nombre de disco validado. |
+| `src/pages/api/connections.ts` | Lee `.config`, aplica una conexión y actualiza `.env`. |
+| `src/lib/connections.ts` | Parser de `.config` y descifrado AES-256-GCM de la contraseña. |
 | `src/pages/api/stream.ts` | SSE con `snapshot`, `output`, `result`, `status` y `done`. |
 | `src/pages/api/cancel.ts` | Cancela el job y mata la PTY. |
 | `src/pages/api/settings.ts` | GET/POST del panel ⚙: lee y guarda `.env` de forma atómica. |
