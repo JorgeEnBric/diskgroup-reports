@@ -13,18 +13,25 @@ const ENVIRONMENTS = [
   'STAGING',
   'SITIO ALTERNO',
 ] as const;
+const OPERATING_SYSTEMS = ['AIX', 'Linux', 'Windows'] as const;
 
 type DeploymentWindow = (typeof DEPLOYMENT_WINDOWS)[number];
 type Environment = (typeof ENVIRONMENTS)[number];
+type OperatingSystem = (typeof OPERATING_SYSTEMS)[number];
+
+interface ServerRow {
+  hostname: string;
+  ip: string;
+}
 
 interface FormState {
   application: string;
   deploymentWindow: DeploymentWindow;
   businessProcess: string;
   environment: Environment;
-  ambiente: Environment;
-  servers: [string, string, string, string];
-  path: string;
+  operatingSystem: OperatingSystem;
+  servers: ServerRow[];
+  paths: string[];
   diskCount: string;
   diskSize: string;
   remediation: string;
@@ -34,28 +41,39 @@ interface FormState {
 
 type CopyState = 'idle' | 'copied' | 'error';
 
-const INITIAL_FORM: FormState = {
-  application: 'N/A',
-  deploymentWindow: 'EPS',
-  businessProcess: 'N/A',
-  environment: 'PRODUCCION',
-  ambiente: 'PRODUCCION',
-  servers: ['', '', '', ''],
-  path: '/dev/secvm/dev/rENC_DGDTASLW414',
-  diskCount: '1',
-  diskSize: '400',
-  remediation: 'N/A',
-  changeClass: 'Estandar (Automático)',
-  reason: 'Mantenimiento',
-};
+function createInitialForm(): FormState {
+  return {
+    application: 'N/A',
+    deploymentWindow: 'EPS',
+    businessProcess: 'N/A',
+    environment: 'PRODUCCION',
+    operatingSystem: 'AIX',
+    servers: [
+      { hostname: '', ip: '' },
+      { hostname: '', ip: '' },
+    ],
+    paths: ['/dev/secvm/dev/rENC_DGDTASLW414'],
+    diskCount: '1',
+    diskSize: '400',
+    remediation: 'N/A',
+    changeClass: 'Estandar (Automático)',
+    reason: 'Mantenimiento',
+  };
+}
 
 function formatNumber(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }
 
-function serverTable(servers: FormState['servers']): string {
-  const cells = servers.map((server) => server.trim() || 'N/A');
-  return `${cells[0]}\t${cells[1]}\n${cells[2]}\t${cells[3]}`;
+function serverTable(servers: ServerRow[]): string {
+  return servers
+    .map((server) => `${server.hostname.trim() || 'N/A'}\t${server.ip.trim() || 'N/A'}`)
+    .join('\n');
+}
+
+function pathLines(paths: string[]): string {
+  const values = paths.map((path) => path.trim()).filter(Boolean);
+  return values.length > 0 ? values.join('\n') : 'N/A';
 }
 
 function renderTemplate(form: FormState): string {
@@ -71,12 +89,12 @@ function renderTemplate(form: FormState): string {
     'Se solicita una ampliación de la capacidad de almacenamiento en el entorno de',
     form.environment,
     'para soportar el crecimiento proyectado de los datos. Esta necesidad de capacidad adicional',
-    'debe ser implementada en la plataforma con sistema operativo AIX',
-    `AMBIENTE ${form.ambiente}`,
+    `debe ser implementada en la plataforma con sistema operativo ${form.operatingSystem}`,
+    `AMBIENTE ${form.environment}`,
     'SERVIDOR y/o IP:',
     serverTable(form.servers),
     'PATH NUEVOS:',
-    form.path.trim() || 'N/A',
+    pathLines(form.paths),
     'CANTIDAD DE DISCOS:',
     `${formatNumber(diskCount)} DISCO`,
     'TAMAÑO DISCOS:',
@@ -91,14 +109,14 @@ function renderTemplate(form: FormState): string {
 }
 
 export default function DiskTemplateModal({ open, onClose }: Props) {
-  const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const [form, setForm] = useState<FormState>(createInitialForm);
   const [copyState, setCopyState] = useState<CopyState>('idle');
 
   const template = useMemo(() => renderTemplate(form), [form]);
 
   useEffect(() => {
     if (!open) return;
-    setForm(INITIAL_FORM);
+    setForm(createInitialForm());
     setCopyState('idle');
   }, [open]);
 
@@ -107,11 +125,53 @@ export default function DiskTemplateModal({ open, onClose }: Props) {
     setCopyState('idle');
   }
 
-  function setServer(index: number, value: string): void {
+  function setServer(rowIndex: number, key: keyof ServerRow, value: string): void {
     setForm((previous) => {
-      const servers = [...previous.servers] as FormState['servers'];
-      servers[index] = value;
+      const servers = previous.servers.map((server, index) =>
+        index === rowIndex ? { ...server, [key]: value } : server,
+      );
       return { ...previous, servers };
+    });
+    setCopyState('idle');
+  }
+
+  function addServerRow(): void {
+    setForm((previous) => ({
+      ...previous,
+      servers: [...previous.servers, { hostname: '', ip: '' }],
+    }));
+    setCopyState('idle');
+  }
+
+  function removeServerRow(rowIndex: number): void {
+    setForm((previous) => {
+      if (previous.servers.length <= 2) return previous;
+      return {
+        ...previous,
+        servers: previous.servers.filter((_, index) => index !== rowIndex),
+      };
+    });
+    setCopyState('idle');
+  }
+
+  function setPath(index: number, value: string): void {
+    setForm((previous) => {
+      const paths = [...previous.paths];
+      paths[index] = value;
+      return { ...previous, paths };
+    });
+    setCopyState('idle');
+  }
+
+  function addPath(): void {
+    setForm((previous) => ({ ...previous, paths: [...previous.paths, ''] }));
+    setCopyState('idle');
+  }
+
+  function removePath(index: number): void {
+    setForm((previous) => {
+      if (previous.paths.length <= 1) return previous;
+      return { ...previous, paths: previous.paths.filter((_, pathIndex) => pathIndex !== index) };
     });
     setCopyState('idle');
   }
@@ -240,7 +300,7 @@ export default function DiskTemplateModal({ open, onClose }: Props) {
               <legend>Descripción del cambio</legend>
               <div class="disk-template-grid">
                 <label class="field">
-                  <span>Entorno</span>
+                  <span>Entorno / Ambiente</span>
                   <select
                     value={form.environment}
                     onChange={(event) =>
@@ -254,47 +314,107 @@ export default function DiskTemplateModal({ open, onClose }: Props) {
                 </label>
 
                 <label class="field">
-                  <span>Ambiente</span>
+                  <span>Sistema operativo</span>
                   <select
-                    value={form.ambiente}
+                    value={form.operatingSystem}
                     onChange={(event) =>
-                      setField('ambiente', (event.target as HTMLSelectElement).value as Environment)
+                      setField(
+                        'operatingSystem',
+                        (event.target as HTMLSelectElement).value as OperatingSystem,
+                      )
                     }
                   >
-                    {ENVIRONMENTS.map((environment) => (
-                      <option key={environment} value={environment}>{environment}</option>
+                    {OPERATING_SYSTEMS.map((operatingSystem) => (
+                      <option key={operatingSystem} value={operatingSystem}>{operatingSystem}</option>
                     ))}
                   </select>
                 </label>
               </div>
 
-              <p class="disk-template-static">Sistema operativo: AIX</p>
-
               <div class="field">
-                <span>SERVIDOR y/o IP (tabla 2 × 2)</span>
-                <div class="disk-template-server-grid">
+                <span>SERVIDOR y/o IP</span>
+                <small class="disk-template-hint">Izquierda: hostname · Derecha: IP</small>
+                <div class="disk-template-server-list">
                   {form.servers.map((server, index) => (
-                    <input
-                      key={index}
-                      type="text"
-                      value={server}
-                      placeholder={`Servidor/IP ${index + 1}`}
-                      aria-label={`Servidor o IP ${index + 1}`}
-                      onInput={(event) => setServer(index, (event.target as HTMLInputElement).value)}
-                    />
+                    <div class="disk-template-server-row" key={index}>
+                      <input
+                        type="text"
+                        value={server.hostname}
+                        placeholder="Hostname"
+                        aria-label={`Hostname ${index + 1}`}
+                        onInput={(event) => setServer(index, 'hostname', (event.target as HTMLInputElement).value)}
+                      />
+                      <input
+                        type="text"
+                        value={server.ip}
+                        placeholder="IP"
+                        aria-label={`IP ${index + 1}`}
+                        onInput={(event) => setServer(index, 'ip', (event.target as HTMLInputElement).value)}
+                      />
+                      {form.servers.length > 2 && (
+                        <button
+                          type="button"
+                          class="disk-template-row-remove"
+                          aria-label={`Quitar fila ${index + 1}`}
+                          title="Quitar fila"
+                          onClick={() => removeServerRow(index)}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
+                <button
+                  type="button"
+                  class="disk-template-add"
+                  aria-label="Agregar hostname e IP"
+                  title="Agregar hostname e IP"
+                  onClick={addServerRow}
+                >
+                  + Agregar hostname/IP
+                </button>
               </div>
 
               <div class="disk-template-grid">
-                <label class="field">
-                  <span>PATH NUEVOS</span>
-                  <input
-                    type="text"
-                    value={form.path}
-                    onInput={(event) => setField('path', (event.target as HTMLInputElement).value)}
-                  />
-                </label>
+                <div class="field">
+                  <div class="disk-template-label-row">
+                    <span>PATH NUEVOS</span>
+                    <button
+                      type="button"
+                      class="disk-template-add disk-template-add--inline"
+                      aria-label="Agregar path"
+                      title="Agregar path"
+                      onClick={addPath}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div class="disk-template-path-list">
+                    {form.paths.map((path, index) => (
+                      <div class="disk-template-path-row" key={index}>
+                        <input
+                          type="text"
+                          value={path}
+                          placeholder="Path"
+                          aria-label={`Path ${index + 1}`}
+                          onInput={(event) => setPath(index, (event.target as HTMLInputElement).value)}
+                        />
+                        {form.paths.length > 1 && (
+                          <button
+                            type="button"
+                            class="disk-template-row-remove"
+                            aria-label={`Quitar path ${index + 1}`}
+                            title="Quitar path"
+                            onClick={() => removePath(index)}
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
                 <div class="field">
                   <span>Totales</span>
