@@ -7,15 +7,8 @@ import { addResult, appendOutput, disposeJob, setStatus, type JobInternal } from
 import { getMasterPassword } from './master-password';
 import { extractOracleErrors, parseSpool, rowsToObjects } from './parse';
 import { getQuery, renderSql } from './queries';
+import { createTerminalFormatter } from './terminal-format';
 import type { CheckStatus, QueryResult } from './types';
-
-/**
- * El separador `|~|` es necesario para parsear los SPOOL, pero SQLcl/SQL*Plus
- * también lo ecoa en la PTY. En el terminal se muestra como espacios.
- */
-function sanitizeTerminalOutput(text: string, delimiter: string): string {
-  return text ? text.split(delimiter).join('   ') : text;
-}
 
 /** Oculta los warnings de JLine/JVM en pantalla sin perder el log crudo del job. */
 function createOutputFilter() {
@@ -158,10 +151,14 @@ export async function executeJob(job: JobInternal): Promise<void> {
   const cfg = getConfig();
   // La contraseña maestra vive solo en memoria del servidor; nunca se lee de .env.
   cfg.dbPassword = await getMasterPassword();
+  const formatter = createTerminalFormatter(cfg.delimiter);
+  const writeLine = (line: string): void => {
+    appendOutput(job, line, formatter.push(line));
+  };
   const problems = validateConfig(cfg);
   if (problems.length > 0) {
     setStatus(job, 'error', problems.join(' | '));
-    appendOutput(job, `\r\n[ERROR] ${problems.join(' | ')}\r\n`);
+    writeLine(`\r\n[ERROR] ${problems.join(' | ')}\r\n`);
     disposeJob(job);
     return;
   }
@@ -182,12 +179,12 @@ export async function executeJob(job: JobInternal): Promise<void> {
     await writeFile(scriptPath, buildScript(job, spoolPaths, cfg), 'utf8');
 
     const clientName = cfg.sqlClient === 'sqlcl' ? 'SQLcl' : 'SQL*Plus';
-    appendOutput(job, `[INFO] Ejecutando ${clientName}: ${cfg.sqlplusBin}\r\n`);
+    writeLine(`[INFO] Ejecutando ${clientName}: ${cfg.sqlplusBin}\r\n`);
     if (cfg.directConnection) {
-      appendOutput(job, `[INFO] Conexión directa: ${cfg.dbConnect}\r\n`);
+      writeLine(`[INFO] Conexión directa: ${cfg.dbConnect}\r\n`);
     }
     if (cfg.javaOpts) {
-      appendOutput(job, `[INFO] Opciones JVM activas: ${cfg.javaOpts}\r\n`);
+      writeLine(`[INFO] Opciones JVM activas: ${cfg.javaOpts}\r\n`);
     }
 
     const childEnv: Record<string, string> = { ...(process.env as Record<string, string>) };
@@ -214,7 +211,7 @@ export async function executeJob(job: JobInternal): Promise<void> {
     const child = pty.spawn(cfg.sqlplusBin, args, {
       // node-pty usa `name` como TERM en Unix; en SQLcl queremos un terminal no interactivo.
       name: cfg.sqlClient === 'sqlcl' ? 'dumb' : 'xterm-color',
-      cols: 160,
+      cols: 240,
       rows: 32,
       cwd: workDir,
       env: childEnv,
@@ -223,18 +220,16 @@ export async function executeJob(job: JobInternal): Promise<void> {
     job.kill = () => child.kill();
 
     const filter = createOutputFilter();
-    child.onData((data: string) =>
-      appendOutput(job, data, sanitizeTerminalOutput(filter.push(data), cfg.delimiter)),
-    );
+    child.onData((data: string) => appendOutput(job, data, formatter.push(filter.push(data))));
 
     timeout = setTimeout(() => {
-      appendOutput(job, `\r\n[ERROR] Timeout de ${cfg.timeoutMs} ms alcanzado.\r\n`);
+      writeLine(`\r\n[ERROR] Timeout de ${cfg.timeoutMs} ms alcanzado.\r\n`);
       job.kill?.();
     }, cfg.timeoutMs);
 
     await new Promise<void>((resolve) => {
       child.onExit(() => {
-        const remaining = sanitizeTerminalOutput(filter.flush(), cfg.delimiter);
+        const remaining = formatter.push(filter.flush()) + formatter.flush();
         if (remaining) appendOutput(job, '', remaining);
         resolve();
       });
@@ -254,7 +249,7 @@ export async function executeJob(job: JobInternal): Promise<void> {
     setStatus(job, 'done');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    appendOutput(job, `\r\n[ERROR] ${message}\r\n`);
+    writeLine(`\r\n[ERROR] ${message}\r\n`);
     setStatus(job, 'error', message);
   } finally {
     if (timeout) clearTimeout(timeout);
