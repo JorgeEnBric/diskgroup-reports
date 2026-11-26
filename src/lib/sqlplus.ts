@@ -126,7 +126,7 @@ function toResult(
     };
     const message =
       id === 'disk_free_check' && params?.diskName
-        ? `disco consultado [${params.diskName}], disco libre`
+        ? `Disco consultado ${params.diskName}, es un disco libre`
         : empty.message;
     return {
       ...common,
