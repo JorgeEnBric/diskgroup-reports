@@ -203,7 +203,7 @@ export default function ReportTable({
                 </table>
               </div>
             ) : (
-              <p class="notice">La consulta no devolvió filas.</p>
+              <br></br>
             )}
           </article>
         );
