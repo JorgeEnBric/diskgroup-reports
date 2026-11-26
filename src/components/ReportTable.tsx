@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { buildCandidateCopyText } from '../lib/candidate-copy';
 import type { QueryMeta, QueryResult } from '../lib/types';
 
+type NoticeVariant = 'ok' | 'error' | 'info';
+
 interface Props {
   results: QueryResult[];
   queries: QueryMeta[];
@@ -9,8 +11,14 @@ interface Props {
   loadingDisks?: string[];
   title?: string;
   notice?: string;
+  noticeVariant?: NoticeVariant;
+  hideQueryHeader?: boolean;
   onClose?: () => void;
   closeLabel?: string;
+}
+
+function noticeClass(variant?: NoticeVariant): string {
+  return variant ? `notice notice--${variant}` : 'notice';
 }
 
 export default function ReportTable({
@@ -20,6 +28,8 @@ export default function ReportTable({
   loadingDisks = [],
   title = 'Resultado del reporte',
   notice,
+  noticeVariant,
+  hideQueryHeader = false,
   onClose,
   closeLabel = 'Cerrar sección',
 }: Props) {
@@ -74,7 +84,7 @@ export default function ReportTable({
           {closeButton}
         </div>
         {notice ? (
-          <p class="notice">{notice}</p>
+          <p class={noticeClass(noticeVariant)}>{notice}</p>
         ) : (
           <div class="empty-state">
             <strong>Sin resultados todavía</strong>
@@ -95,7 +105,7 @@ export default function ReportTable({
         {closeButton}
       </div>
 
-      {notice && <p class="notice">{notice}</p>}
+      {notice && <p class={noticeClass(noticeVariant)}>{notice}</p>}
 
       {results.map((result) => {
         const meta = queries.find((query) => query.id === (result.sourceId ?? result.id));
@@ -107,17 +117,24 @@ export default function ReportTable({
         const sourceId = result.sourceId ?? result.id;
         const showDiskAction = sourceId === 'dg_summary';
         const showCopyFunction = sourceId === 'dg_disks';
+        const isDiskCheck = sourceId === 'disk_free_check';
+        const diskExists = result.rows.some((row) => row.NOTA === 'DISCO YA EXISTE!!!');
+        const resultNotice = result.error ?? (isDiskCheck && diskExists ? 'DISCO YA EXISTE!!!' : undefined);
+        let resultNoticeVariant: NoticeVariant | undefined = noticeVariant;
+        if (isDiskCheck) resultNoticeVariant = diskExists ? 'error' : 'ok';
 
         return (
           <article class="query-block" key={result.id}>
-            <header class="query-block-header">
-              <h3>{result.title}</h3>
-              <div class="query-block-meta">
-                <small>{result.rows.length} filas · {result.durationMs} ms</small>
-              </div>
-            </header>
+            {!hideQueryHeader && (
+              <header class="query-block-header">
+                <h3>{result.title}</h3>
+                <div class="query-block-meta">
+                  <small>{result.rows.length} filas · {result.durationMs} ms</small>
+                </div>
+              </header>
+            )}
 
-            {result.error && <p class="notice">{result.error}</p>}
+            {resultNotice && <p class={noticeClass(resultNoticeVariant)}>{resultNotice}</p>}
 
             {result.rows.length > 0 ? (
               <div class="table-wrap">

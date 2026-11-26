@@ -99,7 +99,7 @@ function toResult(
   const resultId = paramName ? `${id}:${paramName}` : id;
   const sourceId = resultId === id ? undefined : id;
   const title = params?.diskName
-    ? `${query.title} [${params.diskName}]`
+    ? `${query.title} ${params.diskName}`
     : params?.diskgroupName
       ? `${query.title} ${params.diskgroupName}`
       : query.title;

@@ -426,6 +426,7 @@ export default function QueryRunner() {
           queries={queries}
           title={`Discos del diskgroup ${panel.diskgroupName}`}
           notice={panel.error || (panel.loading ? 'Consultando discos…' : undefined)}
+          noticeVariant={panel.error ? 'error' : panel.loading ? 'info' : undefined}
           onClose={() => closeDisks(panel.diskgroupName)}
           closeLabel={`Cerrar discos del diskgroup ${panel.diskgroupName}`}
         />
@@ -437,6 +438,7 @@ export default function QueryRunner() {
           results={[result]}
           queries={queries}
           title={result.title}
+          hideQueryHeader
           onClose={() => closeCheckResult(result.id)}
           closeLabel={`Quitar ${result.title} del reporte`}
         />
