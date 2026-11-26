@@ -731,6 +731,26 @@ tbody tr:nth-child(even) {
   gap: 14px;
 }
 
+.settings-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-inline input {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-inline .button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.settings-actions {
+  margin-top: 12px;
+}
+
 .settings-field {
   display: block;
 }

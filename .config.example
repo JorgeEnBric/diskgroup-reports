@@ -1,13 +1,7 @@
+# Genera el campo password desde el engranaje ⚙ → "Cifrar y guardar en .config".
 {
   "password": "<BASE64_NONCE_TAG_CIPHERTEXT>",
-  "PROD": {
-    "user": "system",
-    "connect": "//host:1521/SERVICIO",
-    "tnsAdmin": ""
-  },
-  "LAB": {
-    "user": "system",
-    "connect": "//lab:1521/LAB",
-    "tnsAdmin": "/oracle/network/admin"
-  }
+SURASTAT/[PASS]@srorcbdd04:1537/DLLFINAN
+SURASTAT/[PASS]@mdebdfndmtop01.suramericana.com.co:1537/PDNFNDMTO
+SURASTAT/[PASS]@cluster1b-scan.suranet.com:1537/ADMIN
 }

@@ -117,27 +117,24 @@ where name = '{{DISK_NAME}}';
 
 El panel de la izquierda incluye un desplegable **Conexión guardada (.config)** justo encima de los botones principales. Copia `.config.example` a `.config` y edítalo a mano con este formato:
 
-```json
+```text
 {
   "password": "<BASE64_NONCE_TAG_CIPHERTEXT>",
-  "PROD": {
-    "user": "system",
-    "connect": "//host:1521/SERVICIO",
-    "tnsAdmin": ""
-  },
-  "LAB": {
-    "user": "system",
-    "connect": "//lab:1521/LAB",
-    "tnsAdmin": "/oracle/network/admin"
-  }
+SURASTAT/[PASS]@srorcbdd04:1537/DLLFINAN
+SURASTAT/[PASS]@mdebdfndmtop01.suramericana.com.co:1537/PDNFNDMTO
+SURASTAT/[PASS]@cluster1b-scan.suranet.com:1537/ADMIN
 }
 ```
 
-- `password` es una clave reservada: una sola contraseña cifrada compartida por todas las conexiones. El resto de claves de primer nivel son los nombres del desplegable.
-- Cifrado: AES-256-GCM con clave de 32 bytes en `CONFIG_ENCRYPTION_KEY` (base64 o hexadecimal). El valor guardado es base64 de `nonce(12) + tag(16) + ciphertext`.
-- Al elegir una conexión se descifra la contraseña en el servidor, se escriben `DB_USER`, `DB_CONNECT`, `TNS_ADMIN` y `DB_PASSWORD` en `.env` y se actualiza la conexión activa. El navegador nunca recibe la contraseña.
+- Cada conexión se escribe en una línea con el formato `USUARIO/[PASS]@HOST:PUERTO/SERVICIO`. El usuario pasa a `DB_USER` y `HOST:PUERTO/SERVICIO` se convierte en `DB_CONNECT=//HOST:PUERTO/SERVICIO`.
+- El desplegable muestra el **servicio** (`DLLFINAN`, `PDNFNDMTO`, `ADMIN`). Si un servicio se repite se numeriza con `_2`, `_3`, etc.
+- `[PASS]` es un marcador: el servidor lo sustituye por la contraseña descifrada del campo `password`, una sola para todas las conexiones. El navegador nunca recibe la contraseña ni el marcador.
+- `password` es una clave reservada con cifrado AES-256-GCM y clave de 32 bytes en `CONFIG_ENCRYPTION_KEY` (base64 o hexadecimal). El valor guardado es base64 de `nonce(12) + tag(16) + ciphertext`.
+- La sección **Contraseña maestra (.config)** del engranaje ⚙ cifra la contraseña en el servidor, reemplaza esa línea en `.config` y muestra el ciphertext resultante. La contraseña en claro no se guarda en `.env` ni se devuelve al navegador.
+- Al elegir una conexión se descifra la contraseña en el servidor, se escriben `DB_USER`, `DB_CONNECT` y `DB_PASSWORD` en `.env` (con `TNS_ADMIN` vacío) y se actualiza la conexión activa.
+- Se permiten llaves, comas finales, líneas vacías y comentarios (`#`, `//`, `--`). Una línea malformada produce un error con su número.
 - El botón **↻** recarga la lista después de editar `.config`; también se recarga al volver a enfocar la ventana.
-- Si `.config` no existe, el desplegable queda vacío. Un JSON inválido o una conexión inexistente muestra un error sin modificar `.env`.
+- Si `.config` no existe, el desplegable queda vacío. Una conexión inexistente o un error de cifrado muestra un error sin modificar `.env`.
 
 ## Ajustes desde la interfaz (engranaje ⚙)
 
@@ -152,7 +149,8 @@ El botón ⚙ de la barra superior abre un panel que lee y escribe el archivo `.
   --enable-native-access=ALL-UNNAMED --enable-final-field-mutation=ALL-UNNAMED
   ```
   Déjalo vacío si tu Java no admite estos flags. Las líneas `WARNING:` y `Picked up JAVA_TOOL_OPTIONS:` se ocultan en el terminal, pero el log completo queda en memoria del job para depuración.
-- La contraseña nunca se devuelve al navegador: se muestra el marcador `__KEEP__`. Déjalo así para conservar la contraseña actual o escríbela nueva para reemplazarla.
+- **Contraseña maestra (.config)**: escribe la contraseña única y pulsa **Cifrar y guardar en .config**. Se usa la clave `CONFIG_ENCRYPTION_KEY` del servidor; si `.config` no existe se muestra un error. El ciphertext se muestra para copiar; la contraseña en claro no se persiste ni se envía de vuelta.
+- La contraseña de conexión nunca se devuelve al navegador: se muestra el marcador `__KEEP__`. Déjalo así para conservar la contraseña actual o escríbela nueva para reemplazarla.
 - Los cambios se aplican a la siguiente ejecución sin reiniciar el servidor.
 
 ## Consultas maestras
@@ -181,7 +179,8 @@ Los `set lines 180 pages 200` y `col ... format` incluidos en las consultas se r
 | `src/pages/api/run-disks.ts` | Consulta bajo demanda “Discos del diskgroup” con parámetro validado. |
 | `src/pages/api/check-disk-free.ts` | Consulta oculta “Confirmar disco libre” con nombre de disco validado. |
 | `src/pages/api/connections.ts` | Lee `.config`, aplica una conexión y actualiza `.env`. |
-| `src/lib/connections.ts` | Parser de `.config` y descifrado AES-256-GCM de la contraseña. |
+| `src/pages/api/encrypt-password.ts` | Cifra la contraseña maestra y la guarda en `.config`. |
+| `src/lib/connections.ts` | Parser de `.config` y cifrado/descifrado AES-256-GCM de la contraseña. |
 | `src/pages/api/stream.ts` | SSE con `snapshot`, `output`, `result`, `status` y `done`. |
 | `src/pages/api/cancel.ts` | Cancela el job y mata la PTY. |
 | `src/pages/api/settings.ts` | GET/POST del panel ⚙: lee y guarda `.env` de forma atómica. |

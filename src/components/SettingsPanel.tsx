@@ -81,6 +81,9 @@ export default function SettingsPanel() {
   const [error, setError] = useState('');
   const [envPath, setEnvPath] = useState('');
   const [form, setForm] = useState<FormState>(initialForm);
+  const [masterPassword, setMasterPassword] = useState('');
+  const [masterEncrypted, setMasterEncrypted] = useState('');
+  const [encrypting, setEncrypting] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -164,6 +167,49 @@ export default function SettingsPanel() {
       setError(cause instanceof Error ? cause.message : String(cause));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function encryptMaster(): Promise<void> {
+    if (!masterPassword.trim()) {
+      setError('Escribe la contraseña maestra antes de cifrarla.');
+      return;
+    }
+
+    setEncrypting(true);
+    setMessage('');
+    setError('');
+    setMasterEncrypted('');
+
+    try {
+      const response = await fetch('/api/encrypt-password', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-requested-with': 'XMLHttpRequest' },
+        body: JSON.stringify({ password: masterPassword }),
+      });
+      const data = (await response.json()) as { encrypted?: string; error?: string };
+      if (!response.ok) {
+        setError(data.error ?? 'No se pudo cifrar la contraseña.');
+        return;
+      }
+
+      setMasterEncrypted(data.encrypted ?? '');
+      setMessage('Contraseña cifrada y guardada en .config.');
+      setMasterPassword('');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setEncrypting(false);
+    }
+  }
+
+  async function copyEncrypted(): Promise<void> {
+    if (!masterEncrypted) return;
+    try {
+      await navigator.clipboard.writeText(masterEncrypted);
+      setMessage('Valor cifrado copiado al portapapeles.');
+    } catch {
+      setError('No se pudo copiar el valor cifrado.');
     }
   }
 
@@ -292,6 +338,51 @@ export default function SettingsPanel() {
                       />
                     </div>
                   )}
+
+                  <h3 class="settings-section">Contraseña maestra (.config)</h3>
+                  <div class="settings-grid">
+                    <label class="settings-field">
+                      <span>Contraseña maestra</span>
+                      <input
+                        type="password"
+                        value={masterPassword}
+                        placeholder="Contraseña única para .config"
+                        onInput={(event) => setMasterPassword((event.target as HTMLInputElement).value)}
+                      />
+                      <small>Se cifra en el servidor y se guarda en .config. No se guarda en .env.</small>
+                    </label>
+                    <label class="settings-field">
+                      <span>Valor cifrado</span>
+                      <div class="settings-inline">
+                        <input
+                          type="text"
+                          value={masterEncrypted}
+                          placeholder="Se generará al cifrar"
+                          readOnly
+                        />
+                        <button
+                          type="button"
+                          class="button button--ghost button--small"
+                          onClick={() => void copyEncrypted()}
+                          disabled={!masterEncrypted}
+                          title="Copiar valor cifrado"
+                        >
+                          📋
+                        </button>
+                      </div>
+                      <small>AES-256-GCM con la clave CONFIG_ENCRYPTION_KEY del servidor.</small>
+                    </label>
+                  </div>
+                  <div class="settings-actions">
+                    <button
+                      type="button"
+                      class="button button--primary button--small"
+                      onClick={() => void encryptMaster()}
+                      disabled={loading || encrypting}
+                    >
+                      {encrypting ? 'Cifrando…' : 'Cifrar y guardar en .config'}
+                    </button>
+                  </div>
 
                   <h3 class="settings-section">Opciones avanzadas</h3>
                   <div class="settings-grid">
