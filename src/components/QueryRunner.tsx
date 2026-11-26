@@ -5,6 +5,7 @@ import { isValidDiskgroup } from '../lib/queries';
 import type { SshInstanceOption } from '../lib/ssh-shared';
 import type { JobSnapshot, JobStatus, QueryMeta, QueryResult } from '../lib/types';
 import DiskFreeModal from './DiskFreeModal';
+import DiskTemplateModal from './DiskTemplateModal';
 import ReportTable from './ReportTable';
 import TerminalPanel from './TerminalPanel';
 
@@ -44,6 +45,7 @@ export default function QueryRunner() {
   const [diskPanels, setDiskPanels] = useState<DiskPanel[]>([]);
   const [checkResults, setCheckResults] = useState<QueryResult[]>([]);
   const [checkModalOpen, setCheckModalOpen] = useState(false);
+  const [diskTemplateModalOpen, setDiskTemplateModalOpen] = useState(false);
   const [savedConnections, setSavedConnections] = useState<SavedConnectionOption[]>([]);
   const [selectedConnection, setSelectedConnection] = useState('');
   const [connectionSearch, setConnectionSearch] = useState('');
@@ -706,6 +708,15 @@ export default function QueryRunner() {
             <span class="button-icon" aria-hidden="true">▤</span>
             <span class="button-label">{templateBusy ? 'Construyendo…' : 'Template'}</span>
           </button>
+          <button
+            class="button button--template"
+            onClick={() => setDiskTemplateModalOpen(true)}
+            aria-label="Plantilla disco"
+            title="Plantilla disco"
+          >
+            <span class="button-icon" aria-hidden="true">📋</span>
+            <span class="button-label">Plantilla disco</span>
+          </button>
         </div>
       </section>
 
@@ -758,6 +769,10 @@ export default function QueryRunner() {
         onResult={upsertCheckResult}
       />
 
+      <DiskTemplateModal
+        open={diskTemplateModalOpen}
+        onClose={() => setDiskTemplateModalOpen(false)}
+      />
     </main>
   );
 }
