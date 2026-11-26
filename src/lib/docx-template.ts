@@ -19,6 +19,9 @@ const TABLE_PLACEHOLDERS = [
   { pattern: /\[\s*Tabla\s*2\s*\.\s*Discos\s+candidatos\s*\]/i, queryId: 'dg_disks' },
 ] as const;
 
+const DISKGROUP_QUERY_ID = 'dg_disks_by_group';
+const DISKGROUP_TABLES_PLACEHOLDER = /\[\s*Tablas de discos de diskgroups solicitadas\s*\]/i;
+
 function decodeXml(value: string): string {
   return value
     .replace(/&lt;/g, '<')
@@ -139,6 +142,36 @@ function buildTable(meta: QueryMeta | undefined, result: QueryResult | undefined
   );
 }
 
+function sectionTitle(text: string): string {
+  return (
+    '<w:p><w:pPr><w:pStyle w:val="Ttulo2"/><w:keepNext/></w:pPr>' +
+    '<w:r><w:rPr><w:lang w:val="es-CO"/></w:rPr>' +
+    `${textRun(text)}</w:r></w:p>`
+  );
+}
+
+/** Una tabla por cada diskgroup que el usuario consultó con “Ver discos”. */
+function buildDiskgroupTables(results: QueryResult[], queries: QueryMeta[]): string {
+  const meta = queries.find((query) => query.id === DISKGROUP_QUERY_ID);
+  const requested = results.filter(
+    (result) =>
+      (result.sourceId ?? result.id) === DISKGROUP_QUERY_ID ||
+      result.id.startsWith(`${DISKGROUP_QUERY_ID}:`),
+  );
+
+  if (requested.length === 0) {
+    return `<w:p><w:r>${textRun('No se solicitaron discos de diskgroups.')}</w:r></w:p>`;
+  }
+
+  return requested
+    .map((result, index) => {
+      const title = result.title || 'Discos del diskgroup';
+      const separator = index < requested.length - 1 ? '<w:p/>' : '';
+      return sectionTitle(title) + buildTable(meta, result) + separator;
+    })
+    .join('');
+}
+
 function today(): { long: string; stamp: string } {
   const now = new Date();
   const day = String(now.getDate()).padStart(2, '0');
@@ -180,6 +213,10 @@ export async function buildTemplateDocument({ label, results, queries }: Templat
       replaced.add('label');
       return replaceParagraphText(paragraph, label);
     }
+    if (DISKGROUP_TABLES_PLACEHOLDER.test(text)) {
+      replaced.add(DISKGROUP_QUERY_ID);
+      return buildDiskgroupTables(results, queries);
+    }
 
     for (const placeholder of TABLE_PLACEHOLDERS) {
       if (placeholder.pattern.test(text)) {
@@ -192,8 +229,12 @@ export async function buildTemplateDocument({ label, results, queries }: Templat
     return paragraph;
   });
 
-  const missing = ['date', 'label', ...TABLE_PLACEHOLDERS.map((item) => item.queryId)]
-    .filter((key) => !replaced.has(key));
+  const missing = [
+    'date',
+    'label',
+    DISKGROUP_QUERY_ID,
+    ...TABLE_PLACEHOLDERS.map((item) => item.queryId),
+  ].filter((key) => !replaced.has(key));
   if (missing.length > 0) {
     throw new Error(`Faltan marcadores en ${TEMPLATE_PATH}: ${missing.join(', ')}.`);
   }

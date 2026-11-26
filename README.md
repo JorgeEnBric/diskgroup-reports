@@ -75,8 +75,9 @@ Marcadores reemplazados:
 - `[Etiqueta de reporte]` → etiqueta escrita en el formulario (por ejemplo `DATA`).
 - `[Tabla1. Diskgroups ASM]` → tabla de la consulta `dg_summary`.
 - `[Tabla2. Discos candidatos]` → tabla de la consulta `dg_disks`.
+- `[Tablas de discos de diskgroups solicitadas]` → una sección por cada consulta **Ver discos** que haya generado el usuario, con el título `Discos del diskgroup NOMBRE` y su tabla. Si no se solicitó ninguno, se escribe `No se solicitaron discos de diskgroups.`.
 
-Si alguna consulta no se ejecutó, su tabla queda con una fila `Sin datos`. El nombre descargado es `reporte_diskgroups_<ETIQUETA>_<YYYYMMDD>.docx`. El procesamiento ocurre solo en el servidor: el navegador recibe el `.docx` ya terminado.
+Si alguna consulta maestra no se ejecutó, su tabla queda con una fila `Sin datos`. Los marcadores `Tabla1` y `Tabla2` se rellenan en **todas** sus apariciones (por ejemplo, también en la sección 4 de validación cruzada). El nombre descargado es `reporte_diskgroups_<ETIQUETA>_<YYYYMMDD>.docx`. El procesamiento ocurre solo en el servidor: el navegador recibe el `.docx` ya terminado.
 
 ## Discos del diskgroup
 
