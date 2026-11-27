@@ -90,6 +90,15 @@ export default function QueryRunner() {
     setCheckResults((previous) => previous.filter((item) => item.id !== id));
   }
 
+  const diskgroupTableNames = Array.from(
+    new Set(
+      results
+        .filter((result) => (result.sourceId ?? result.id) === 'dg_summary')
+        .flatMap((result) => result.rows.map((row) => (row.NAME ?? '').trim().toUpperCase()))
+        .filter(Boolean),
+    ),
+  );
+
   function toggleAddDiskgroup(rawName: string): void {
     const name = rawName.trim().toUpperCase();
     if (!isValidDiskgroup(name)) return;
@@ -109,7 +118,7 @@ export default function QueryRunner() {
 
   function createNewDiskgroup(rawName: string): void {
     const name = rawName.trim().toUpperCase();
-    if (!isValidDiskgroup(name) || addedDiskgroups.includes(name)) return;
+    if (!isValidDiskgroup(name) || addedDiskgroups.includes(name) || diskgroupTableNames.includes(name)) return;
 
     setAddedDiskgroups([...addedDiskgroups, name]);
     setNewDiskgroups([...newDiskgroups, name]);
@@ -938,6 +947,7 @@ export default function QueryRunner() {
       <NewDiskgroupModal
         open={newDiskgroupModalOpen}
         existingNames={addedDiskgroups}
+        tableNames={diskgroupTableNames}
         onClose={() => setNewDiskgroupModalOpen(false)}
         onConfirm={createNewDiskgroup}
       />

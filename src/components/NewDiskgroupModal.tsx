@@ -4,11 +4,12 @@ import { isValidDiskgroup } from '../lib/queries';
 interface Props {
   open: boolean;
   existingNames: string[];
+  tableNames: string[];
   onClose: () => void;
   onConfirm: (name: string) => void;
 }
 
-export default function NewDiskgroupModal({ open, existingNames, onClose, onConfirm }: Props) {
+export default function NewDiskgroupModal({ open, existingNames, tableNames, onClose, onConfirm }: Props) {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
 
@@ -21,7 +22,7 @@ export default function NewDiskgroupModal({ open, existingNames, onClose, onConf
   if (!open) return null;
 
   const normalized = name.trim().toUpperCase();
-  const duplicate = existingNames.includes(normalized);
+  const duplicate = existingNames.includes(normalized) || tableNames.includes(normalized);
   const valid = isValidDiskgroup(normalized) && !duplicate;
 
   function confirm(): void {
@@ -29,7 +30,7 @@ export default function NewDiskgroupModal({ open, existingNames, onClose, onConf
       setError('Nombre de diskgroup inválido. Usa solo letras, números y guion bajo (máx. 30).');
       return;
     }
-    if (existingNames.includes(normalized)) {
+    if (duplicate) {
       setError('Ya existe un diskgroup con ese nombre.');
       return;
     }
