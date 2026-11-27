@@ -3,7 +3,7 @@ import { downloadTemplate } from '../lib/docx-client';
 import { downloadReport } from '../lib/pdf-client';
 import { isValidDiskgroup } from '../lib/queries';
 import type { SshInstanceOption } from '../lib/ssh-shared';
-import type { JobSnapshot, JobStatus, QueryMeta, QueryResult } from '../lib/types';
+import type { DiskLink, JobSnapshot, JobStatus, QueryMeta, QueryResult } from '../lib/types';
 import DiskFreeModal from './DiskFreeModal';
 import DiskTemplateModal from './DiskTemplateModal';
 import ReportTable from './ReportTable';
@@ -43,6 +43,9 @@ export default function QueryRunner() {
   const [jobId, setJobId] = useState('');
   const [connectionLabel, setConnectionLabel] = useState('');
   const [diskPanels, setDiskPanels] = useState<DiskPanel[]>([]);
+  const [addedDiskgroups, setAddedDiskgroups] = useState<string[]>([]);
+  const [activeDiskgroup, setActiveDiskgroup] = useState('');
+  const [diskLinks, setDiskLinks] = useState<DiskLink[]>([]);
   const [checkResults, setCheckResults] = useState<QueryResult[]>([]);
   const [checkModalOpen, setCheckModalOpen] = useState(false);
   const [diskTemplateModalOpen, setDiskTemplateModalOpen] = useState(false);
@@ -81,6 +84,36 @@ export default function QueryRunner() {
 
   function closeCheckResult(id: string): void {
     setCheckResults((previous) => previous.filter((item) => item.id !== id));
+  }
+
+  function toggleAddDiskgroup(rawName: string): void {
+    const name = rawName.trim().toUpperCase();
+    if (!isValidDiskgroup(name)) return;
+
+    if (addedDiskgroups.includes(name)) {
+      const remaining = addedDiskgroups.filter((item) => item !== name);
+      setAddedDiskgroups(remaining);
+      setDiskLinks((previous) => previous.filter((link) => link.diskgroup !== name));
+      if (activeDiskgroup === name) setActiveDiskgroup(remaining[remaining.length - 1] ?? '');
+      return;
+    }
+
+    setAddedDiskgroups([...addedDiskgroups, name]);
+    setActiveDiskgroup(name);
+  }
+
+  function linkDisk(rawPath: string): void {
+    const path = rawPath.trim();
+    if (!path || !activeDiskgroup || !addedDiskgroups.includes(activeDiskgroup)) return;
+    setDiskLinks((previous) =>
+      previous.some((link) => link.path === path)
+        ? previous
+        : [...previous, { diskgroup: activeDiskgroup, path }],
+    );
+  }
+
+  function unlinkDisk(path: string): void {
+    setDiskLinks((previous) => previous.filter((link) => link.path !== path));
   }
 
   function invalidateDiskRequest(key: string): void {
@@ -249,6 +282,9 @@ export default function QueryRunner() {
     for (const key of detailTokensRef.current.keys()) invalidateDiskRequest(key);
     pendingOpensRef.current.clear();
     setDiskPanels([]);
+    setAddedDiskgroups([]);
+    setActiveDiskgroup('');
+    setDiskLinks([]);
     setCheckResults([]);
     setCheckModalOpen(false);
     setOutput('');
@@ -457,6 +493,8 @@ export default function QueryRunner() {
       .filter((result): result is QueryResult => Boolean(result)),
     ...checkResults,
   ];
+  const linkedDiskgroupsByPath: Record<string, string> = {};
+  for (const link of diskLinks) linkedDiskgroupsByPath[link.path] = link.diskgroup;
   const searchText = connectionSearch.trim().toLowerCase();
   const visibleConnections = searchText
     ? savedConnections.filter((connection) =>
@@ -483,6 +521,7 @@ export default function QueryRunner() {
         diskgroup: diskgroup.trim().toUpperCase(),
         results: allResults,
         queries,
+        links: diskLinks,
       });
     } catch (cause) {
       setTemplateError(cause instanceof Error ? cause.message : String(cause));
@@ -631,7 +670,7 @@ export default function QueryRunner() {
           </button>
           <button
             class="button button--download"
-            onClick={() => void downloadReport({ diskgroup: diskgroup.trim().toUpperCase(), results: allResults, queries })}
+            onClick={() => void downloadReport({ diskgroup: diskgroup.trim().toUpperCase(), results: allResults, queries, links: diskLinks })}
             disabled={allResults.length === 0}
             aria-label="Descargar PDF"
             title="Descargar PDF"
@@ -736,12 +775,74 @@ export default function QueryRunner() {
             </button>
           </div>
         </section>
+
+        <section class="panel relations-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Relaciones</h2>
+              <p>Diskgroup → disco candidato.</p>
+            </div>
+          </div>
+
+          {addedDiskgroups.length === 0 ? (
+            <div class="empty-state relations-empty">
+              <strong>Sin diskgroups añadidos</strong>
+              <span>Pulsa Add en la tabla 1. Diskgroups ASM.</span>
+            </div>
+          ) : (
+            <div class="relations-list">
+              {addedDiskgroups.map((name) => {
+                const rows = diskLinks.filter((link) => link.diskgroup === name);
+                const isActive = name === activeDiskgroup;
+                return (
+                  <div class={isActive ? 'relation-group is-active' : 'relation-group'} key={name}>
+                    <button
+                      type="button"
+                      class="relation-group__title"
+                      title={isActive ? 'Diskgroup activo para Enlazar' : `Usar ${name} como destino de Enlazar`}
+                      onClick={() => setActiveDiskgroup(name)}
+                    >
+                      <span class="relation-group__marker" aria-hidden="true">◆</span>
+                      <strong>{name}</strong>
+                      {isActive && <span class="relation-group__badge">activo</span>}
+                    </button>
+                    {rows.length === 0 ? (
+                      <p class="relation-empty">Sin discos enlazados.</p>
+                    ) : (
+                      <ul class="relation-rows">
+                        {rows.map((link) => (
+                          <li class="relation-row" key={link.path}>
+                            <span aria-hidden="true">→</span>
+                            <code>{link.path}</code>
+                            <button
+                              type="button"
+                              class="relation-remove"
+                              aria-label={`Desenlazar ${link.path}`}
+                              title={`Desenlazar ${link.path}`}
+                              onClick={() => unlinkDisk(link.path)}
+                            >
+                              ✕
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </div>
 
       <ReportTable
         results={results}
         queries={queries}
         onShowDisks={(name) => void openDisks(name)}
+        onAddDiskgroup={toggleAddDiskgroup}
+        onLinkDisk={linkDisk}
+        addedDiskgroups={addedDiskgroups}
+        linkedDiskgroupsByPath={linkedDiskgroupsByPath}
         loadingDisks={loadingDisks}
       />
 

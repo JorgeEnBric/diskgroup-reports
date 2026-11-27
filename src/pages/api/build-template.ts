@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { buildTemplateDocument, templateFilename } from '../../lib/docx-template';
 import { forbidden, isAllowedMutation, json } from '../../lib/http';
 import { isValidDiskgroup } from '../../lib/queries';
-import type { CheckStatus, QueryMeta, QueryResult, ResultRow } from '../../lib/types';
+import type { CheckStatus, DiskLink, QueryMeta, QueryResult, ResultRow } from '../../lib/types';
 
 function asQueries(value: unknown): QueryMeta[] {
   if (!Array.isArray(value)) return [];
@@ -57,6 +57,27 @@ function asResults(value: unknown): QueryResult[] {
   });
 }
 
+function asLinks(value: unknown): DiskLink[] | null {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > 5000) return null;
+
+  const seen = new Set<string>();
+  const links: DiskLink[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== 'object') return null;
+    const record = item as Record<string, unknown>;
+    if (typeof record.diskgroup !== 'string' || typeof record.path !== 'string') return null;
+
+    const diskgroup = record.diskgroup.trim().toUpperCase();
+    const path = record.path.trim();
+    if (!isValidDiskgroup(diskgroup) || path.length === 0 || path.length > 1024) return null;
+    if (seen.has(path)) continue;
+    seen.add(path);
+    links.push({ diskgroup, path });
+  }
+  return links;
+}
+
 export const POST: APIRoute = async ({ request }) => {
   if (!isAllowedMutation(request)) return forbidden();
 
@@ -72,11 +93,17 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: 'Etiqueta de reporte inválida. Usa solo letras, números y guion bajo (máx. 30).' }, 400);
   }
 
+  const links = asLinks(body.links);
+  if (!links) {
+    return json({ error: 'Relaciones inválidas: usa pares diskgroup/path válidos.' }, 400);
+  }
+
   try {
     const docx = await buildTemplateDocument({
       label,
       results: asResults(body.results),
       queries: asQueries(body.queries),
+      links,
     });
     const filename = templateFilename(label);
 

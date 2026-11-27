@@ -42,6 +42,12 @@ export interface QueryResult {
   durationMs: number;
 }
 
+/** Relación many-to-one: un disco candidato solo puede pertenecer a un diskgroup. */
+export interface DiskLink {
+  diskgroup: string;
+  path: string;
+}
+
 export type JobStatus = 'running' | 'done' | 'error' | 'cancelled';
 
 export interface JobSnapshot {

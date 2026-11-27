@@ -693,6 +693,32 @@ td {
   cursor: not-allowed;
 }
 
+.action-link--add {
+  border-color: rgba(74, 222, 128, 0.45);
+  background: rgba(22, 163, 74, 0.1);
+  color: #86efac;
+}
+
+.action-link--add:hover {
+  background: rgba(22, 163, 74, 0.18);
+}
+
+.action-link--add.is-active {
+  border-color: rgba(74, 222, 128, 0.8);
+  background: rgba(22, 163, 74, 0.24);
+  color: #bbf7d0;
+}
+
+.action-link--link {
+  border-color: rgba(167, 139, 250, 0.45);
+  background: rgba(139, 92, 246, 0.1);
+  color: #c4b5fd;
+}
+
+.action-link--link:hover {
+  background: rgba(139, 92, 246, 0.18);
+}
+
 .action-empty {
   color: #475569;
 }
@@ -717,6 +743,115 @@ tbody tr:nth-child(even) {
 .empty-state strong {
   color: var(--text);
   font-size: 15px;
+}
+
+.relations-panel .panel-heading {
+  margin-bottom: 12px;
+}
+
+.relations-empty {
+  padding: 20px 0;
+}
+
+.relations-list {
+  display: grid;
+  gap: 12px;
+}
+
+.relation-group {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.relation-group.is-active {
+  border-color: rgba(74, 222, 128, 0.55);
+  background: rgba(22, 163, 74, 0.08);
+}
+
+.relation-group__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.relation-group__marker {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.relation-group.is-active .relation-group__marker {
+  color: #4ade80;
+}
+
+.relation-group__badge {
+  margin-left: auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.18);
+  color: #86efac;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.relation-empty {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.relation-rows {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.relation-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.relation-row code {
+  overflow-wrap: anywhere;
+  color: #cbd5e1;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 11px;
+}
+
+.relation-remove {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.08);
+  color: #94a3b8;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.relation-remove:hover {
+  border-color: rgba(248, 113, 113, 0.55);
+  background: rgba(220, 38, 38, 0.15);
+  color: #fca5a5;
 }
 
 .footer {

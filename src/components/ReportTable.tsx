@@ -8,6 +8,10 @@ interface Props {
   results: QueryResult[];
   queries: QueryMeta[];
   onShowDisks?: (diskgroupName: string) => void;
+  onAddDiskgroup?: (diskgroupName: string) => void;
+  onLinkDisk?: (path: string) => void;
+  addedDiskgroups?: string[];
+  linkedDiskgroupsByPath?: Record<string, string>;
   loadingDisks?: string[];
   title?: string;
   notice?: string;
@@ -25,6 +29,10 @@ export default function ReportTable({
   results,
   queries,
   onShowDisks,
+  onAddDiskgroup,
+  onLinkDisk,
+  addedDiskgroups = [],
+  linkedDiskgroupsByPath = {},
   loadingDisks = [],
   title = 'Resultado del reporte',
   notice,
@@ -149,10 +157,17 @@ export default function ReportTable({
                   </thead>
                   <tbody>
                     {result.rows.map((row, index) => {
-                      const diskgroupName = row.NAME;
+                      const diskgroupName = (row.NAME ?? '').trim().toUpperCase();
                       const diskPath = (row.PATH ?? '').trim();
                       const rowKey = `${result.id}:${index}`;
                       const isLoading = loadingDisks.includes(diskgroupName);
+                      const isAdded = addedDiskgroups.includes(diskgroupName);
+                      const linkOwner = diskPath ? linkedDiskgroupsByPath[diskPath] : undefined;
+                      const canLink = addedDiskgroups.length > 0;
+                      const hasVerDiscos = showDiskAction && Boolean(onShowDisks) && Boolean(diskgroupName);
+                      const hasAdd = showDiskAction && Boolean(onAddDiskgroup) && Boolean(diskgroupName);
+                      const hasCopy = showCopyFunction;
+                      const hasLink = showCopyFunction && Boolean(onLinkDisk);
 
                       return (
                         <tr key={index}>
@@ -161,20 +176,37 @@ export default function ReportTable({
                           ))}
                           <td>
                             <div class="action-cell">
-                              {showDiskAction && onShowDisks && diskgroupName ? (
+                              {hasVerDiscos ? (
                                 <button
                                   type="button"
                                   class="action-link"
                                   disabled={isLoading}
                                   title={`Ver discos del diskgroup ${diskgroupName}`}
-                                  onClick={() => onShowDisks(diskgroupName)}
+                                  onClick={() => onShowDisks!(diskgroupName)}
                                 >
                                   <span aria-hidden="true">🔍</span>
                                   {isLoading ? 'Consultando…' : 'Ver discos'}
                                 </button>
                               ) : null}
 
-                              {showCopyFunction ? (
+                              {hasAdd ? (
+                                <button
+                                  type="button"
+                                  class={isAdded ? 'action-link action-link--add is-active' : 'action-link action-link--add'}
+                                  aria-pressed={isAdded}
+                                  title={
+                                    isAdded
+                                      ? `Quitar ${diskgroupName} y sus relaciones`
+                                      : `Añadir ${diskgroupName} a las relaciones`
+                                  }
+                                  onClick={() => onAddDiskgroup!(diskgroupName)}
+                                >
+                                  <span aria-hidden="true">{isAdded ? '✓' : '＋'}</span>
+                                  Add
+                                </button>
+                              ) : null}
+
+                              {hasCopy ? (
                                 <button
                                   type="button"
                                   class="action-link action-link--copy"
@@ -191,7 +223,28 @@ export default function ReportTable({
                                 </button>
                               ) : null}
 
-                              {!showDiskAction && !showCopyFunction ? (
+                              {hasLink ? (
+                                <button
+                                  type="button"
+                                  class="action-link action-link--link"
+                                  disabled={!diskPath || !canLink || Boolean(linkOwner)}
+                                  title={
+                                    !diskPath
+                                      ? 'Sin PATH para enlazar'
+                                      : !canLink
+                                        ? 'Añade un diskgroup con Add para enlazar'
+                                        : linkOwner
+                                          ? `Ya enlazado a ${linkOwner}`
+                                          : `Enlazar ${diskPath} al diskgroup activo`
+                                  }
+                                  onClick={() => onLinkDisk!(diskPath)}
+                                >
+                                  <span aria-hidden="true">🔗</span>
+                                  Enlazar
+                                </button>
+                              ) : null}
+
+                              {!hasVerDiscos && !hasAdd && !hasCopy && !hasLink ? (
                                 <span class="action-empty">—</span>
                               ) : null}
                             </div>

@@ -1,18 +1,19 @@
-import type { QueryMeta, QueryResult } from './types';
+import type { DiskLink, QueryMeta, QueryResult } from './types';
 
 export interface TemplateInput {
   diskgroup: string;
   results: QueryResult[];
   queries: QueryMeta[];
+  links?: DiskLink[];
 }
 
 /** Pide al servidor el Template.docx relleno y lo descarga en el navegador. */
-export async function downloadTemplate({ diskgroup, results, queries }: TemplateInput): Promise<void> {
+export async function downloadTemplate({ diskgroup, results, queries, links = [] }: TemplateInput): Promise<void> {
   const label = diskgroup.trim().toUpperCase();
   const response = await fetch('/api/build-template', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-requested-with': 'XMLHttpRequest' },
-    body: JSON.stringify({ label, results, queries }),
+    body: JSON.stringify({ label, results, queries, links }),
   });
 
   if (!response.ok) {

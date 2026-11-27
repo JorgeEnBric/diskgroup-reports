@@ -1,12 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
-import type { QueryMeta, QueryResult } from './types';
+import type { DiskLink, QueryMeta, QueryResult } from './types';
 
 export interface TemplateInput {
   label: string;
   results: QueryResult[];
   queries: QueryMeta[];
+  links?: DiskLink[];
 }
 
 const TEMPLATE_PATH = join(process.cwd(), 'Template.docx');
@@ -173,6 +174,34 @@ function buildDiskgroupTables(results: QueryResult[], queries: QueryMeta[]): str
     .join('');
 }
 
+/** Sección adicional con las relaciones elegidas en el panel derecho. */
+function buildLinksTable(links: DiskLink[]): string {
+  if (links.length === 0) return '';
+
+  const meta: QueryMeta = {
+    id: 'disk_links',
+    title: 'Relaciones diskgroup -> disco',
+    description: '',
+    columns: [
+      { key: 'DISKGROUP', label: 'DISKGROUP' },
+      { key: 'DISCO', label: 'DISCO' },
+    ],
+  };
+  const result: QueryResult = {
+    id: 'disk_links',
+    title: meta.title,
+    status: 'OK',
+    rows: links.map((link) => ({
+      DISKGROUP: link.diskgroup,
+      DISCO: link.path,
+      __status: 'OK' as const,
+    })),
+    durationMs: 0,
+  };
+
+  return sectionTitle(meta.title) + buildTable(meta, result);
+}
+
 function today(): { long: string; stamp: string } {
   const now = new Date();
   const day = String(now.getDate()).padStart(2, '0');
@@ -186,7 +215,7 @@ export function templateFilename(label: string): string {
 }
 
 /** Rellena Template.docx conservando el resto del paquete (logo, estilos, encabezado). */
-export async function buildTemplateDocument({ label, results, queries }: TemplateInput): Promise<Uint8Array> {
+export async function buildTemplateDocument({ label, results, queries, links = [] }: TemplateInput): Promise<Uint8Array> {
   let template: Uint8Array;
   try {
     template = new Uint8Array(await readFile(TEMPLATE_PATH));
@@ -238,6 +267,14 @@ export async function buildTemplateDocument({ label, results, queries }: Templat
   ].filter((key) => !replaced.has(key));
   if (missing.length > 0) {
     throw new Error(`Faltan marcadores en ${TEMPLATE_PATH}: ${missing.join(', ')}.`);
+  }
+
+  const linksXml = buildLinksTable(links);
+  if (linksXml) {
+    const sectPrIndex = xml.lastIndexOf('<w:sectPr');
+    const bodyEndIndex = xml.lastIndexOf('</w:body>');
+    const insertAt = sectPrIndex >= 0 ? sectPrIndex : bodyEndIndex >= 0 ? bodyEndIndex : xml.length;
+    xml = `${xml.slice(0, insertAt)}<w:p/>${linksXml}${xml.slice(insertAt)}`;
   }
 
   zip[part] = strToU8(xml);

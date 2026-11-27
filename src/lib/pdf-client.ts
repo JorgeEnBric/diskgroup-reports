@@ -1,16 +1,17 @@
-import type { QueryMeta, QueryResult } from './types';
+import type { DiskLink, QueryMeta, QueryResult } from './types';
 
 export interface PdfInput {
   diskgroup: string;
   results: QueryResult[];
   queries: QueryMeta[];
+  links?: DiskLink[];
 }
 
 function text(value: unknown): string {
   return value === null || value === undefined ? '' : String(value);
 }
 
-export async function downloadReport({ diskgroup, results, queries }: PdfInput): Promise<void> {
+export async function downloadReport({ diskgroup, results, queries, links = [] }: PdfInput): Promise<void> {
   const [{ jsPDF }, autoTableModule] = await Promise.all([import('jspdf'), import('jspdf-autotable')]);
   const autoTable = (autoTableModule as any).default ?? (autoTableModule as any).autoTable;
 
@@ -100,6 +101,29 @@ export async function downloadReport({ diskgroup, results, queries }: PdfInput):
       y = 55;
     }
   });
+
+  // ---------- Relaciones ----------
+  if (links.length > 0) {
+    if (y > pageHeight - 180) {
+      doc.addPage();
+      y = 55;
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(15, 23, 42);
+    doc.text('Relaciones diskgroup -> disco', 45, y);
+    y += 12;
+    autoTable(doc, {
+      head: [['DISKGROUP', 'DISCO']],
+      body: links.map((link) => [text(link.diskgroup), text(link.path)]),
+      startY: y,
+      margin: { left: 45, right: 45 },
+      styles: { fontSize: 7, cellPadding: 3, overflow: 'ellipsize' },
+      headStyles: { fillColor: [30, 64, 175], textColor: 255, fontSize: 7 },
+      alternateRowStyles: { fillColor: [241, 245, 249] },
+    });
+    y = (doc as any).lastAutoTable.finalY + 28;
+  }
 
   // ---------- Resumen ----------
   if (y > pageHeight - 140) {
