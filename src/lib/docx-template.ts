@@ -9,6 +9,7 @@ export interface TemplateInput {
   results: QueryResult[];
   queries: QueryMeta[];
   links?: DiskLink[];
+  diskgroups?: string[];
 }
 
 const TEMPLATE_PATH = join(process.cwd(), 'Template.docx');
@@ -24,6 +25,7 @@ const TABLE_PLACEHOLDERS = [
 
 const DISKGROUP_QUERY_ID = 'dg_disks_by_group';
 const DISKGROUP_TABLES_PLACEHOLDER = /\[\s*Tablas de discos de diskgroups solicitadas\s*\]/i;
+const RELATIONS_PLACEHOLDER = /\[\s*Relaciones\s*\]/i;
 
 function decodeXml(value: string): string {
   return value
@@ -185,8 +187,7 @@ function buildDiskgroupTables(results: QueryResult[], queries: QueryMeta[]): str
     .join('');
 }
 
-/** Sección adicional con las relaciones elegidas en el panel derecho. */
-function buildLinksTable(links: DiskLink[]): string {
+function buildRelationsTable(links: DiskLink[]): string {
   if (links.length === 0) return '';
 
   const meta: QueryMeta = {
@@ -210,14 +211,23 @@ function buildLinksTable(links: DiskLink[]): string {
     durationMs: 0,
   };
 
-  return sectionTitle(meta.title) + buildTable(meta, result);
+  return buildTable(meta, result);
 }
 
-/** Mismo script que muestra el panel, añadido al final del documento. */
-function buildRelationScriptSection(links: DiskLink[]): string {
-  const scripts = buildRelationScripts(links);
-  if (scripts.length === 0) return '';
-  return sectionTitle('Script autogenerado') + scripts.map(scriptParagraph).join('');
+/** Contenido que sustituye al marcador [Relaciones] del template. */
+function buildRelationsSection(links: DiskLink[], diskgroups: string[] = []): string {
+  if (links.length === 0) {
+    return `<w:p><w:r>${textRun('No se registraron relaciones.')}</w:r></w:p>`;
+  }
+
+  const scripts = buildRelationScripts(links, diskgroups);
+  return (
+    sectionTitle('Relaciones diskgroup -> disco') +
+    buildRelationsTable(links) +
+    (scripts.length > 0
+      ? sectionTitle('Script autogenerado') + scripts.map(scriptParagraph).join('')
+      : '')
+  );
 }
 
 function today(): { long: string; stamp: string } {
@@ -233,7 +243,7 @@ export function templateFilename(label: string): string {
 }
 
 /** Rellena Template.docx conservando el resto del paquete (logo, estilos, encabezado). */
-export async function buildTemplateDocument({ label, results, queries, links = [] }: TemplateInput): Promise<Uint8Array> {
+export async function buildTemplateDocument({ label, results, queries, links = [], diskgroups = [] }: TemplateInput): Promise<Uint8Array> {
   let template: Uint8Array;
   try {
     template = new Uint8Array(await readFile(TEMPLATE_PATH));
@@ -265,6 +275,10 @@ export async function buildTemplateDocument({ label, results, queries, links = [
       replaced.add(DISKGROUP_QUERY_ID);
       return buildDiskgroupTables(results, queries);
     }
+    if (RELATIONS_PLACEHOLDER.test(text)) {
+      replaced.add('relations');
+      return buildRelationsSection(links, diskgroups);
+    }
 
     for (const placeholder of TABLE_PLACEHOLDERS) {
       if (placeholder.pattern.test(text)) {
@@ -281,18 +295,11 @@ export async function buildTemplateDocument({ label, results, queries, links = [
     'date',
     'label',
     DISKGROUP_QUERY_ID,
+    'relations',
     ...TABLE_PLACEHOLDERS.map((item) => item.queryId),
   ].filter((key) => !replaced.has(key));
   if (missing.length > 0) {
     throw new Error(`Faltan marcadores en ${TEMPLATE_PATH}: ${missing.join(', ')}.`);
-  }
-
-  const extraXml = buildLinksTable(links) + buildRelationScriptSection(links);
-  if (extraXml) {
-    const sectPrIndex = xml.lastIndexOf('<w:sectPr');
-    const bodyEndIndex = xml.lastIndexOf('</w:body>');
-    const insertAt = sectPrIndex >= 0 ? sectPrIndex : bodyEndIndex >= 0 ? bodyEndIndex : xml.length;
-    xml = `${xml.slice(0, insertAt)}<w:p/>${extraXml}${xml.slice(insertAt)}`;
   }
 
   zip[part] = strToU8(xml);

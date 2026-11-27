@@ -6,13 +6,14 @@ export interface PdfInput {
   results: QueryResult[];
   queries: QueryMeta[];
   links?: DiskLink[];
+  diskgroups?: string[];
 }
 
 function text(value: unknown): string {
   return value === null || value === undefined ? '' : String(value);
 }
 
-export async function downloadReport({ diskgroup, results, queries, links = [] }: PdfInput): Promise<void> {
+export async function downloadReport({ diskgroup, results, queries, links = [], diskgroups = [] }: PdfInput): Promise<void> {
   const [{ jsPDF }, autoTableModule] = await Promise.all([import('jspdf'), import('jspdf-autotable')]);
   const autoTable = (autoTableModule as any).default ?? (autoTableModule as any).autoTable;
 
@@ -125,7 +126,7 @@ export async function downloadReport({ diskgroup, results, queries, links = [] }
     });
     y = (doc as any).lastAutoTable.finalY + 28;
 
-    const scripts = buildRelationScripts(links);
+    const scripts = buildRelationScripts(links, diskgroups);
     if (scripts.length > 0) {
       if (y > pageHeight - 140) {
         doc.addPage();

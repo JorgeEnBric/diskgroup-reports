@@ -524,6 +524,7 @@ export default function QueryRunner() {
         results: allResults,
         queries,
         links: diskLinks,
+        diskgroups: addedDiskgroups,
       });
     } catch (cause) {
       setTemplateError(cause instanceof Error ? cause.message : String(cause));
@@ -672,7 +673,7 @@ export default function QueryRunner() {
           </button>
           <button
             class="button button--download"
-            onClick={() => void downloadReport({ diskgroup: diskgroup.trim().toUpperCase(), results: allResults, queries, links: diskLinks })}
+            onClick={() => void downloadReport({ diskgroup: diskgroup.trim().toUpperCase(), results: allResults, queries, links: diskLinks, diskgroups: addedDiskgroups })}
             disabled={allResults.length === 0}
             aria-label="Descargar PDF"
             title="Descargar PDF"

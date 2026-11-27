@@ -78,6 +78,20 @@ function asLinks(value: unknown): DiskLink[] | null {
   return links;
 }
 
+function asDiskgroups(value: unknown): string[] | null {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > 100) return null;
+
+  const names: string[] = [];
+  for (const item of value) {
+    if (typeof item !== 'string') return null;
+    const name = item.trim().toUpperCase();
+    if (!isValidDiskgroup(name)) return null;
+    if (!names.includes(name)) names.push(name);
+  }
+  return names;
+}
+
 export const POST: APIRoute = async ({ request }) => {
   if (!isAllowedMutation(request)) return forbidden();
 
@@ -98,12 +112,18 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: 'Relaciones inválidas: usa pares diskgroup/path válidos.' }, 400);
   }
 
+  const diskgroups = asDiskgroups(body.diskgroups);
+  if (!diskgroups) {
+    return json({ error: 'Orden de diskgroups inválido.' }, 400);
+  }
+
   try {
     const docx = await buildTemplateDocument({
       label,
       results: asResults(body.results),
       queries: asQueries(body.queries),
       links,
+      diskgroups,
     });
     const filename = templateFilename(label);
 

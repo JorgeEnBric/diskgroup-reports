@@ -5,15 +5,16 @@ export interface TemplateInput {
   results: QueryResult[];
   queries: QueryMeta[];
   links?: DiskLink[];
+  diskgroups?: string[];
 }
 
 /** Pide al servidor el Template.docx relleno y lo descarga en el navegador. */
-export async function downloadTemplate({ diskgroup, results, queries, links = [] }: TemplateInput): Promise<void> {
+export async function downloadTemplate({ diskgroup, results, queries, links = [], diskgroups = [] }: TemplateInput): Promise<void> {
   const label = diskgroup.trim().toUpperCase();
   const response = await fetch('/api/build-template', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-requested-with': 'XMLHttpRequest' },
-    body: JSON.stringify({ label, results, queries, links }),
+    body: JSON.stringify({ label, results, queries, links, diskgroups }),
   });
 
   if (!response.ok) {
