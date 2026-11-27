@@ -92,6 +92,20 @@ function asDiskgroups(value: unknown): string[] | null {
   return names;
 }
 
+function asNewDiskgroups(value: unknown, diskgroups: string[]): string[] | null {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > 100) return null;
+
+  const names: string[] = [];
+  for (const item of value) {
+    if (typeof item !== 'string') return null;
+    const name = item.trim().toUpperCase();
+    if (!isValidDiskgroup(name) || !diskgroups.includes(name)) return null;
+    if (!names.includes(name)) names.push(name);
+  }
+  return names;
+}
+
 export const POST: APIRoute = async ({ request }) => {
   if (!isAllowedMutation(request)) return forbidden();
 
@@ -117,6 +131,11 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: 'Orden de diskgroups inválido.' }, 400);
   }
 
+  const newDiskgroups = asNewDiskgroups(body.newDiskgroups, diskgroups);
+  if (!newDiskgroups) {
+    return json({ error: 'Diskgroups nuevos inválidos: usa nombres añadidos válidos.' }, 400);
+  }
+
   try {
     const docx = await buildTemplateDocument({
       label,
@@ -124,6 +143,7 @@ export const POST: APIRoute = async ({ request }) => {
       queries: asQueries(body.queries),
       links,
       diskgroups,
+      newDiskgroups,
     });
     const filename = templateFilename(label);
 

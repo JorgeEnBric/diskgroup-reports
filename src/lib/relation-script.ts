@@ -5,10 +5,16 @@ function quotedPath(path: string): string {
 }
 
 /**
- * Genera una sentencia ALTER por diskgroup con discos enlazados.
+ * Genera una sentencia por diskgroup con discos enlazados:
+ * ALTER para los diskgroups actuales y CREATE para los pedidos como nuevos.
  * Conserva el orden de `diskgroups` y, dentro de cada grupo, el orden de enlazado.
  */
-export function buildRelationScripts(links: DiskLink[], diskgroups: string[] = []): string[] {
+export function buildRelationScripts(
+  links: DiskLink[],
+  diskgroups: string[] = [],
+  newDiskgroups: string[] = [],
+): string[] {
+  const created = new Set(newDiskgroups.map((name) => name.trim().toUpperCase()));
   const pathsByDiskgroup = new Map<string, string[]>();
   const order: string[] = [];
 
@@ -38,7 +44,11 @@ export function buildRelationScripts(links: DiskLink[], diskgroups: string[] = [
 
     const quoted = paths.map(quotedPath);
     const disks = quoted.length === 1 ? quoted[0] : `(${quoted.join(', ')})`;
-    scripts.push(`ALTER DISKGROUP ${name} ADD DISK ${disks} REBALANCE POWER 8;`);
+    scripts.push(
+      created.has(name)
+        ? `CREATE DISKGROUP ${name}  EXTERNAL REDUNDANCY DISK ${disks} REBALANCE POWER 8;`
+        : `ALTER DISKGROUP ${name} ADD DISK ${disks} REBALANCE POWER 8;`,
+    );
   }
 
   return scripts;

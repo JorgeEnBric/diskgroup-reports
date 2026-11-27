@@ -10,6 +10,7 @@ export interface TemplateInput {
   queries: QueryMeta[];
   links?: DiskLink[];
   diskgroups?: string[];
+  newDiskgroups?: string[];
 }
 
 const TEMPLATE_PATH = join(process.cwd(), 'Template.docx');
@@ -215,12 +216,16 @@ function buildRelationsTable(links: DiskLink[]): string {
 }
 
 /** Contenido que sustituye al marcador [Relaciones] del template. */
-function buildRelationsSection(links: DiskLink[], diskgroups: string[] = []): string {
+function buildRelationsSection(
+  links: DiskLink[],
+  diskgroups: string[] = [],
+  newDiskgroups: string[] = [],
+): string {
   if (links.length === 0) {
     return `<w:p><w:r>${textRun('No se registraron relaciones.')}</w:r></w:p>`;
   }
 
-  const scripts = buildRelationScripts(links, diskgroups);
+  const scripts = buildRelationScripts(links, diskgroups, newDiskgroups);
   return (
     sectionTitle('Relaciones diskgroup -> disco') +
     buildRelationsTable(links) +
@@ -243,7 +248,7 @@ export function templateFilename(label: string): string {
 }
 
 /** Rellena Template.docx conservando el resto del paquete (logo, estilos, encabezado). */
-export async function buildTemplateDocument({ label, results, queries, links = [], diskgroups = [] }: TemplateInput): Promise<Uint8Array> {
+export async function buildTemplateDocument({ label, results, queries, links = [], diskgroups = [], newDiskgroups = [] }: TemplateInput): Promise<Uint8Array> {
   let template: Uint8Array;
   try {
     template = new Uint8Array(await readFile(TEMPLATE_PATH));
@@ -277,7 +282,7 @@ export async function buildTemplateDocument({ label, results, queries, links = [
     }
     if (RELATIONS_PLACEHOLDER.test(text)) {
       replaced.add('relations');
-      return buildRelationsSection(links, diskgroups);
+      return buildRelationsSection(links, diskgroups, newDiskgroups);
     }
 
     for (const placeholder of TABLE_PLACEHOLDERS) {

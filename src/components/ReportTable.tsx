@@ -9,6 +9,7 @@ interface Props {
   queries: QueryMeta[];
   onShowDisks?: (diskgroupName: string) => void;
   onAddDiskgroup?: (diskgroupName: string) => void;
+  onRequestNewDiskgroup?: () => void;
   onLinkDisk?: (path: string) => void;
   addedDiskgroups?: string[];
   linkedDiskgroupsByPath?: Record<string, string>;
@@ -30,6 +31,7 @@ export default function ReportTable({
   queries,
   onShowDisks,
   onAddDiskgroup,
+  onRequestNewDiskgroup,
   onLinkDisk,
   addedDiskgroups = [],
   linkedDiskgroupsByPath = {},
@@ -138,6 +140,17 @@ export default function ReportTable({
                 <h3>{result.title}</h3>
                 <div class="query-block-meta">
                   <small>{result.rows.length} filas · {result.durationMs} ms</small>
+                  {sourceId === 'dg_summary' && onRequestNewDiskgroup ? (
+                    <button
+                      type="button"
+                      class="action-link action-link--new"
+                      title="Pedir un diskgroup nuevo"
+                      onClick={onRequestNewDiskgroup}
+                    >
+                      <span aria-hidden="true">＋</span>
+                      Pedir un diskgroup nuevo
+                    </button>
+                  ) : null}
                 </div>
               </header>
             )}

@@ -7,6 +7,7 @@ import type { SshInstanceOption } from '../lib/ssh-shared';
 import type { DiskLink, JobSnapshot, JobStatus, QueryMeta, QueryResult } from '../lib/types';
 import DiskFreeModal from './DiskFreeModal';
 import DiskTemplateModal from './DiskTemplateModal';
+import NewDiskgroupModal from './NewDiskgroupModal';
 import ReportTable from './ReportTable';
 import TerminalPanel from './TerminalPanel';
 
@@ -45,10 +46,12 @@ export default function QueryRunner() {
   const [connectionLabel, setConnectionLabel] = useState('');
   const [diskPanels, setDiskPanels] = useState<DiskPanel[]>([]);
   const [addedDiskgroups, setAddedDiskgroups] = useState<string[]>([]);
+  const [newDiskgroups, setNewDiskgroups] = useState<string[]>([]);
   const [activeDiskgroup, setActiveDiskgroup] = useState('');
   const [diskLinks, setDiskLinks] = useState<DiskLink[]>([]);
   const [checkResults, setCheckResults] = useState<QueryResult[]>([]);
   const [checkModalOpen, setCheckModalOpen] = useState(false);
+  const [newDiskgroupModalOpen, setNewDiskgroupModalOpen] = useState(false);
   const [diskTemplateModalOpen, setDiskTemplateModalOpen] = useState(false);
   const [savedConnections, setSavedConnections] = useState<SavedConnectionOption[]>([]);
   const [selectedConnection, setSelectedConnection] = useState('');
@@ -94,6 +97,7 @@ export default function QueryRunner() {
     if (addedDiskgroups.includes(name)) {
       const remaining = addedDiskgroups.filter((item) => item !== name);
       setAddedDiskgroups(remaining);
+      setNewDiskgroups((previous) => previous.filter((item) => item !== name));
       setDiskLinks((previous) => previous.filter((link) => link.diskgroup !== name));
       if (activeDiskgroup === name) setActiveDiskgroup(remaining[remaining.length - 1] ?? '');
       return;
@@ -101,6 +105,24 @@ export default function QueryRunner() {
 
     setAddedDiskgroups([...addedDiskgroups, name]);
     setActiveDiskgroup(name);
+  }
+
+  function createNewDiskgroup(rawName: string): void {
+    const name = rawName.trim().toUpperCase();
+    if (!isValidDiskgroup(name) || addedDiskgroups.includes(name)) return;
+
+    setAddedDiskgroups([...addedDiskgroups, name]);
+    setNewDiskgroups([...newDiskgroups, name]);
+    setActiveDiskgroup(name);
+    setNewDiskgroupModalOpen(false);
+  }
+
+  function removeNewDiskgroup(name: string): void {
+    const remaining = addedDiskgroups.filter((item) => item !== name);
+    setAddedDiskgroups(remaining);
+    setNewDiskgroups((previous) => previous.filter((item) => item !== name));
+    setDiskLinks((previous) => previous.filter((link) => link.diskgroup !== name));
+    if (activeDiskgroup === name) setActiveDiskgroup(remaining[remaining.length - 1] ?? '');
   }
 
   function linkDisk(rawPath: string): void {
@@ -284,10 +306,12 @@ export default function QueryRunner() {
     pendingOpensRef.current.clear();
     setDiskPanels([]);
     setAddedDiskgroups([]);
+    setNewDiskgroups([]);
     setActiveDiskgroup('');
     setDiskLinks([]);
     setCheckResults([]);
     setCheckModalOpen(false);
+    setNewDiskgroupModalOpen(false);
     setOutput('');
     setResults([]);
     setError('');
@@ -496,7 +520,7 @@ export default function QueryRunner() {
   ];
   const linkedDiskgroupsByPath: Record<string, string> = {};
   for (const link of diskLinks) linkedDiskgroupsByPath[link.path] = link.diskgroup;
-  const relationScripts = buildRelationScripts(diskLinks, addedDiskgroups);
+  const relationScripts = buildRelationScripts(diskLinks, addedDiskgroups, newDiskgroups);
   const searchText = connectionSearch.trim().toLowerCase();
   const visibleConnections = searchText
     ? savedConnections.filter((connection) =>
@@ -525,6 +549,7 @@ export default function QueryRunner() {
         queries,
         links: diskLinks,
         diskgroups: addedDiskgroups,
+        newDiskgroups,
       });
     } catch (cause) {
       setTemplateError(cause instanceof Error ? cause.message : String(cause));
@@ -673,7 +698,7 @@ export default function QueryRunner() {
           </button>
           <button
             class="button button--download"
-            onClick={() => void downloadReport({ diskgroup: diskgroup.trim().toUpperCase(), results: allResults, queries, links: diskLinks, diskgroups: addedDiskgroups })}
+            onClick={() => void downloadReport({ diskgroup: diskgroup.trim().toUpperCase(), results: allResults, queries, links: diskLinks, diskgroups: addedDiskgroups, newDiskgroups })}
             disabled={allResults.length === 0}
             aria-label="Descargar PDF"
             title="Descargar PDF"
@@ -790,7 +815,7 @@ export default function QueryRunner() {
           {addedDiskgroups.length === 0 ? (
             <div class="empty-state relations-empty">
               <strong>Sin diskgroups añadidos</strong>
-              <span>Pulsa Add en la tabla 1. Diskgroups ASM.</span>
+              <span>Pulsa Add en la tabla 1. Diskgroups ASM o usa «Pedir un diskgroup nuevo».</span>
             </div>
           ) : (
             <div class="relations-list">
@@ -799,16 +824,32 @@ export default function QueryRunner() {
                 const isActive = name === activeDiskgroup;
                 return (
                   <div class={isActive ? 'relation-group is-active' : 'relation-group'} key={name}>
-                    <button
-                      type="button"
-                      class="relation-group__title"
-                      title={isActive ? 'Diskgroup activo para Enlazar' : `Usar ${name} como destino de Enlazar`}
-                      onClick={() => setActiveDiskgroup(name)}
-                    >
-                      <span class="relation-group__marker" aria-hidden="true">◆</span>
-                      <strong>{name}</strong>
-                      {isActive && <span class="relation-group__badge">activo</span>}
-                    </button>
+                    <div class="relation-group__heading">
+                      <button
+                        type="button"
+                        class="relation-group__title"
+                        title={isActive ? 'Diskgroup activo para Enlazar' : `Usar ${name} como destino de Enlazar`}
+                        onClick={() => setActiveDiskgroup(name)}
+                      >
+                        <span class="relation-group__marker" aria-hidden="true">◆</span>
+                        <strong>{name}</strong>
+                        {newDiskgroups.includes(name) && (
+                          <span class="relation-group__badge relation-group__badge--new">nuevo</span>
+                        )}
+                        {isActive && <span class="relation-group__badge">activo</span>}
+                      </button>
+                      {newDiskgroups.includes(name) ? (
+                        <button
+                          type="button"
+                          class="relation-group__remove"
+                          aria-label={`Quitar el diskgroup nuevo ${name}`}
+                          title={`Quitar ${name} y sus relaciones`}
+                          onClick={() => removeNewDiskgroup(name)}
+                        >
+                          ✕
+                        </button>
+                      ) : null}
+                    </div>
                     {rows.length === 0 ? (
                       <p class="relation-empty">Sin discos enlazados.</p>
                     ) : (
@@ -850,6 +891,7 @@ export default function QueryRunner() {
         queries={queries}
         onShowDisks={(name) => void openDisks(name)}
         onAddDiskgroup={toggleAddDiskgroup}
+        onRequestNewDiskgroup={() => setNewDiskgroupModalOpen(true)}
         onLinkDisk={linkDisk}
         addedDiskgroups={addedDiskgroups}
         linkedDiskgroupsByPath={linkedDiskgroupsByPath}
@@ -891,6 +933,13 @@ export default function QueryRunner() {
       <DiskTemplateModal
         open={diskTemplateModalOpen}
         onClose={() => setDiskTemplateModalOpen(false)}
+      />
+
+      <NewDiskgroupModal
+        open={newDiskgroupModalOpen}
+        existingNames={addedDiskgroups}
+        onClose={() => setNewDiskgroupModalOpen(false)}
+        onConfirm={createNewDiskgroup}
       />
     </main>
   );
