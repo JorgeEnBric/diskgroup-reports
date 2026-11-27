@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { downloadTemplate } from '../lib/docx-client';
 import { downloadReport } from '../lib/pdf-client';
 import { isValidDiskgroup } from '../lib/queries';
+import { buildRelationScripts } from '../lib/relation-script';
 import type { SshInstanceOption } from '../lib/ssh-shared';
 import type { DiskLink, JobSnapshot, JobStatus, QueryMeta, QueryResult } from '../lib/types';
 import DiskFreeModal from './DiskFreeModal';
@@ -495,6 +496,7 @@ export default function QueryRunner() {
   ];
   const linkedDiskgroupsByPath: Record<string, string> = {};
   for (const link of diskLinks) linkedDiskgroupsByPath[link.path] = link.diskgroup;
+  const relationScripts = buildRelationScripts(diskLinks, addedDiskgroups);
   const searchText = connectionSearch.trim().toLowerCase();
   const visibleConnections = searchText
     ? savedConnections.filter((connection) =>
@@ -830,6 +832,13 @@ export default function QueryRunner() {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {relationScripts.length > 0 && (
+            <div class="relation-scripts">
+              <span class="relation-scripts__label">Script autogenerado</span>
+              <code>{relationScripts.join('\n')}</code>
             </div>
           )}
         </section>

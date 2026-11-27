@@ -1,3 +1,4 @@
+import { buildRelationScripts } from './relation-script';
 import type { DiskLink, QueryMeta, QueryResult } from './types';
 
 export interface PdfInput {
@@ -123,6 +124,31 @@ export async function downloadReport({ diskgroup, results, queries, links = [] }
       alternateRowStyles: { fillColor: [241, 245, 249] },
     });
     y = (doc as any).lastAutoTable.finalY + 28;
+
+    const scripts = buildRelationScripts(links);
+    if (scripts.length > 0) {
+      if (y > pageHeight - 140) {
+        doc.addPage();
+        y = 55;
+      }
+      doc.setFont('courier', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(15, 23, 42);
+      doc.text('Script autogenerado', 45, y);
+      y += 16;
+
+      doc.setFont('courier', 'normal');
+      doc.setFontSize(8);
+      for (const script of scripts) {
+        const lines = doc.splitTextToSize(script, pageWidth - 90);
+        if (y + lines.length * 11 > pageHeight - 50) {
+          doc.addPage();
+          y = 55;
+        }
+        doc.text(lines, 45, y);
+        y += lines.length * 11 + 6;
+      }
+    }
   }
 
   // ---------- Resumen ----------

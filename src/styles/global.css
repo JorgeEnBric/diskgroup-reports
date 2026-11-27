@@ -854,6 +854,36 @@ tbody tr:nth-child(even) {
   color: #fca5a5;
 }
 
+.relation-scripts {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.relation-scripts__label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.relation-scripts code {
+  display: block;
+  padding: 10px 12px;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  background: #070c17;
+  color: #bae6fd;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .footer {
   display: flex;
   justify-content: space-between;

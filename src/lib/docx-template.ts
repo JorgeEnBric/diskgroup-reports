@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
+import { buildRelationScripts } from './relation-script';
 import type { DiskLink, QueryMeta, QueryResult } from './types';
 
 export interface TemplateInput {
@@ -152,6 +153,16 @@ function sectionTitle(text: string): string {
   );
 }
 
+function scriptParagraph(text: string): string {
+  return (
+    '<w:p><w:pPr><w:spacing w:before="0" w:after="80" w:line="240" w:lineRule="auto"/></w:pPr>' +
+    '<w:r><w:rPr>' +
+    '<w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:cs="Consolas"/>' +
+    '<w:sz w:val="16"/><w:szCs w:val="16"/>' +
+    `</w:rPr>${textRun(text)}</w:r></w:p>`
+  );
+}
+
 /** Una tabla por cada diskgroup que el usuario consultó con “Ver discos”. */
 function buildDiskgroupTables(results: QueryResult[], queries: QueryMeta[]): string {
   const meta = queries.find((query) => query.id === DISKGROUP_QUERY_ID);
@@ -200,6 +211,13 @@ function buildLinksTable(links: DiskLink[]): string {
   };
 
   return sectionTitle(meta.title) + buildTable(meta, result);
+}
+
+/** Mismo script que muestra el panel, añadido al final del documento. */
+function buildRelationScriptSection(links: DiskLink[]): string {
+  const scripts = buildRelationScripts(links);
+  if (scripts.length === 0) return '';
+  return sectionTitle('Script autogenerado') + scripts.map(scriptParagraph).join('');
 }
 
 function today(): { long: string; stamp: string } {
@@ -269,12 +287,12 @@ export async function buildTemplateDocument({ label, results, queries, links = [
     throw new Error(`Faltan marcadores en ${TEMPLATE_PATH}: ${missing.join(', ')}.`);
   }
 
-  const linksXml = buildLinksTable(links);
-  if (linksXml) {
+  const extraXml = buildLinksTable(links) + buildRelationScriptSection(links);
+  if (extraXml) {
     const sectPrIndex = xml.lastIndexOf('<w:sectPr');
     const bodyEndIndex = xml.lastIndexOf('</w:body>');
     const insertAt = sectPrIndex >= 0 ? sectPrIndex : bodyEndIndex >= 0 ? bodyEndIndex : xml.length;
-    xml = `${xml.slice(0, insertAt)}<w:p/>${linksXml}${xml.slice(insertAt)}`;
+    xml = `${xml.slice(0, insertAt)}<w:p/>${extraXml}${xml.slice(insertAt)}`;
   }
 
   zip[part] = strToU8(xml);
